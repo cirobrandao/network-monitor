@@ -8,16 +8,17 @@
       <FontFamily x:Key="UiFont">Segoe UI, Segoe UI Variable Display</FontFamily>
       <FontFamily x:Key="MonoFont">Consolas, Cascadia Mono, Courier New</FontFamily>
 
-      <Color x:Key="BgColor">#F3F5F7</Color>
+      <Color x:Key="BgColor">#F4F6F8</Color>
       <Color x:Key="SurfaceColor">#FFFFFF</Color>
-      <Color x:Key="Surface2Color">#E8ECF0</Color>
-      <Color x:Key="BorderColor">#C9D2DB</Color>
-      <Color x:Key="TextColor">#1C2430</Color>
-      <Color x:Key="MutedColor">#5E6B7A</Color>
-      <Color x:Key="DownColor">#1A8F5A</Color>
-      <Color x:Key="UpColor">#2B6BCF</Color>
-      <Color x:Key="AccentColor">#1F6FEB</Color>
+      <Color x:Key="Surface2Color">#EEF1F4</Color>
+      <Color x:Key="BorderColor">#D5DCE3</Color>
+      <Color x:Key="TextColor">#1A2433</Color>
+      <Color x:Key="MutedColor">#5C6773</Color>
+      <Color x:Key="DownColor">#0D7A5F</Color>
+      <Color x:Key="UpColor">#1A5FA8</Color>
+      <Color x:Key="AccentColor">#0F4C81</Color>
       <Color x:Key="PeakColor">#B42318</Color>
+      <Color x:Key="HeaderColor">#12344D</Color>
 
       <SolidColorBrush x:Key="BgBrush" Color="{StaticResource BgColor}" />
       <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
@@ -29,6 +30,7 @@
       <SolidColorBrush x:Key="UpBrush" Color="{StaticResource UpColor}" />
       <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
       <SolidColorBrush x:Key="PeakBrush" Color="{StaticResource PeakColor}" />
+      <SolidColorBrush x:Key="HeaderBrush" Color="{StaticResource HeaderColor}" />
 
       <local:EnumToBoolConverter x:Key="EnumToBool" />
       <local:EnumToVisibilityConverter x:Key="EnumToVis" />
@@ -74,9 +76,36 @@
       </Style>
 
       <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource GhostButton}">
-        <Setter Property="Background" Value="#1F6FEB" />
+        <Setter Property="Background" Value="#0F4C81" />
         <Setter Property="Foreground" Value="White" />
-        <Setter Property="BorderBrush" Value="#1F6FEB" />
+        <Setter Property="BorderBrush" Value="#0F4C81" />
+      </Style>
+
+      <Style x:Key="HeaderButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderBrush" Value="#55FFFFFF" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+          <Setter.Value>
+            <ControlTemplate TargetType="Button">
+              <Border x:Name="bd"
+                      Background="{TemplateBinding Background}"
+                      BorderBrush="{TemplateBinding BorderBrush}"
+                      BorderThickness="{TemplateBinding BorderThickness}"
+                      Padding="{TemplateBinding Padding}">
+                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+              <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                  <Setter TargetName="bd" Property="Background" Value="#22FFFFFF" />
+                </Trigger>
+              </ControlTemplate.Triggers>
+            </ControlTemplate>
+          </Setter.Value>
+        </Setter>
       </Style>
 
       <Style x:Key="Segment" TargetType="RadioButton">
@@ -91,8 +120,8 @@
               </Border>
               <ControlTemplate.Triggers>
                 <Trigger Property="IsChecked" Value="True">
-                  <Setter TargetName="bd" Property="Background" Value="#DCE6F5" />
-                  <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                  <Setter TargetName="bd" Property="Background" Value="#12344D" />
+                  <Setter Property="Foreground" Value="White" />
                 </Trigger>
                 <Trigger Property="IsMouseOver" Value="True">
                   <Setter TargetName="bd" Property="Background" Value="#E8ECF0" />
@@ -123,28 +152,34 @@
       </Style>
 
       <Style x:Key="ChevronToggle" TargetType="ToggleButton">
-        <Setter Property="Width" Value="28" />
-        <Setter Property="Height" Value="28" />
-        <Setter Property="Margin" Value="0,0,10,0" />
+        <Setter Property="Width" Value="16" />
+        <Setter Property="Height" Value="16" />
+        <Setter Property="Margin" Value="0,0,8,0" />
         <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="Background" Value="#E8ECF0" />
-        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
-        <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Focusable" Value="False" />
         <Setter Property="Template">
           <Setter.Value>
             <ControlTemplate TargetType="ToggleButton">
-              <Border Background="{TemplateBinding Background}"
-                      BorderBrush="{TemplateBinding BorderBrush}"
-                      BorderThickness="{TemplateBinding BorderThickness}">
-                <TextBlock x:Name="glyph" Text="▸" HorizontalAlignment="Center" VerticalAlignment="Center" />
-              </Border>
+              <Grid Background="Transparent">
+                <Path x:Name="arrow"
+                      Data="M 1,0.5 L 7,5.5 L 1,10.5"
+                      Stroke="#5C6773"
+                      StrokeThickness="1.4"
+                      StrokeStartLineCap="Round"
+                      StrokeEndLineCap="Round"
+                      StrokeLineJoin="Round"
+                      Fill="Transparent"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Center" />
+              </Grid>
               <ControlTemplate.Triggers>
                 <Trigger Property="IsChecked" Value="True">
-                  <Setter TargetName="glyph" Property="Text" Value="▾" />
+                  <Setter TargetName="arrow" Property="Data" Value="M 0.5,2 L 5.5,8 L 10.5,2" />
                 </Trigger>
                 <Trigger Property="IsMouseOver" Value="True">
-                  <Setter Property="Background" Value="#DCE6F5" />
+                  <Setter TargetName="arrow" Property="Stroke" Value="#0F4C81" />
                 </Trigger>
               </ControlTemplate.Triggers>
             </ControlTemplate>
@@ -152,10 +187,26 @@
         </Setter>
       </Style>
 
-      <Style x:Key="BlockButton" TargetType="Button" BasedOn="{StaticResource GhostButton}">
-        <Setter Property="Padding" Value="10,4" />
+      <Style x:Key="BlockButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#0F4C81" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="4,2" />
         <Setter Property="FontSize" Value="12" />
-        <Setter Property="Margin" Value="10,0,0,0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Margin" Value="8,0,0,0" />
+        <Setter Property="Template">
+          <Setter.Value>
+            <ControlTemplate TargetType="Button">
+              <TextBlock x:Name="txt" Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" />
+              <ControlTemplate.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                  <Setter TargetName="txt" Property="TextDecorations" Value="Underline" />
+                </Trigger>
+              </ControlTemplate.Triggers>
+            </ControlTemplate>
+          </Setter.Value>
+        </Setter>
       </Style>
     </ResourceDictionary>
   </Application.Resources>

@@ -76,8 +76,8 @@ public sealed class ScopeBrushConverter : IValueConverter
         return value is AddressScope scope
             ? scope switch
             {
-                AddressScope.Public => Brush("#1A8F5A"),
-                AddressScope.Private => Brush("#2B6BCF"),
+                AddressScope.Public => Brush("#0D7A5F"),
+                AddressScope.Private => Brush("#1A5FA8"),
                 AddressScope.Loopback => Brush("#5E6B7A"),
                 AddressScope.LinkLocal => Brush("#A15C00"),
                 AddressScope.Multicast => Brush("#7A3E9D"),

@@ -93,6 +93,7 @@ public sealed class AppState : ObservableObject
     public bool IsElevated { get; } = FirewallService.IsElevated;
     public string ElevationText => IsElevated ? "Executando como administrador" : "Sem administrador — bloqueios precisam de elevação";
     public bool OverlayDetailsVisible => !Settings.OverlayCompact && (Settings.OverlayShowPublicIp || IsPeaking);
+    public bool OverlayChartVisible => Settings.OverlayShowChart && !Settings.OverlayCompact;
 
     public string DnsHosts
     {
@@ -157,6 +158,7 @@ public sealed class AppState : ObservableObject
             Settings.OverlayCompact = value;
             Raise();
             Raise(nameof(OverlayDetailsVisible));
+            Raise(nameof(OverlayChartVisible));
             OverlayStyleChanged?.Invoke();
             Persist();
         }
@@ -302,6 +304,54 @@ public sealed class AppState : ObservableObject
             OverlayStyleChanged?.Invoke();
             Persist();
         }
+    }
+
+    public bool OverlayShowChart
+    {
+        get => Settings.OverlayShowChart;
+        set
+        {
+            if (Settings.OverlayShowChart == value) return;
+            Settings.OverlayShowChart = value;
+            Raise();
+            Raise(nameof(OverlayChartVisible));
+            OverlayStyleChanged?.Invoke();
+            Persist();
+        }
+    }
+
+    public ChartKind OverlayChartType
+    {
+        get => Enum.TryParse<ChartKind>(Settings.OverlayChartType, true, out var kind) ? kind : ChartKind.Area;
+        set
+        {
+            if (OverlayChartType == value) return;
+            Settings.OverlayChartType = value.ToString();
+            Raise();
+            Raise(nameof(OverlayChartLine));
+            Raise(nameof(OverlayChartArea));
+            Raise(nameof(OverlayChartBar));
+            OverlayStyleChanged?.Invoke();
+            Persist();
+        }
+    }
+
+    public bool OverlayChartLine
+    {
+        get => OverlayChartType == ChartKind.Line;
+        set { if (value) OverlayChartType = ChartKind.Line; }
+    }
+
+    public bool OverlayChartArea
+    {
+        get => OverlayChartType == ChartKind.Area;
+        set { if (value) OverlayChartType = ChartKind.Area; }
+    }
+
+    public bool OverlayChartBar
+    {
+        get => OverlayChartType == ChartKind.Bar;
+        set { if (value) OverlayChartType = ChartKind.Bar; }
     }
 
     public bool ShowChart
@@ -466,6 +516,8 @@ public sealed class AppState : ObservableObject
         Settings.BlockedProgramAddresses ??= [];
         if (string.IsNullOrWhiteSpace(Settings.ChartType))
             Settings.ChartType = "Area";
+        if (string.IsNullOrWhiteSpace(Settings.OverlayChartType))
+            Settings.OverlayChartType = "Area";
         StartupManager.Apply(Settings.StartWithWindows);
         _persistReady = true;
         Raise(nameof(ShowOverlay));
@@ -482,6 +534,12 @@ public sealed class AppState : ObservableObject
         Raise(nameof(ShowPublicIp));
         Raise(nameof(OverlayShowConnections));
         Raise(nameof(OverlayShowPublicIp));
+        Raise(nameof(OverlayShowChart));
+        Raise(nameof(OverlayChartVisible));
+        Raise(nameof(OverlayChartType));
+        Raise(nameof(OverlayChartLine));
+        Raise(nameof(OverlayChartArea));
+        Raise(nameof(OverlayChartBar));
         Raise(nameof(ShowChart));
         Raise(nameof(ChartType));
         Raise(nameof(ChartLine));

@@ -24,7 +24,7 @@
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
-    <Border Grid.Row="0" Padding="16,12" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+    <Border Grid.Row="0" Padding="16,12" Background="{StaticResource HeaderBrush}">
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
@@ -33,37 +33,33 @@
         </Grid.ColumnDefinitions>
 
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-          <Image Source="pack://application:,,,/Assets/app.png" Width="24" Height="24" Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality" />
+          <Image Source="pack://application:,,,/Assets/app.png" Width="22" Height="22" Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality" />
           <StackPanel>
-            <TextBlock Text="Network Monitor" FontSize="16" FontWeight="SemiBold" />
-            <TextBlock FontSize="12" Foreground="{StaticResource MutedBrush}"
+            <TextBlock Text="NETWORK MONITOR" FontSize="13" FontWeight="SemiBold" Foreground="White" />
+            <TextBlock FontSize="11" Foreground="#B8C5D1"
                        Visibility="{Binding ShowPublicIp, Converter={StaticResource BoolToVis}}">
-              <Run Text="IP externo:" />
+              <Run Text="IP externo  " />
               <Run Text="{Binding PublicIp, Mode=OneWay}" FontFamily="{StaticResource MonoFont}" />
             </TextBlock>
           </StackPanel>
         </StackPanel>
 
         <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,16,0">
-          <Border Background="#E8F6EE" BorderBrush="#B7E0C8" BorderThickness="1" Padding="12,6" Margin="0,0,8,0" MinWidth="150">
-            <StackPanel>
-              <TextBlock Text="DOWNLOAD" FontSize="10" Foreground="{StaticResource DownBrush}" FontWeight="SemiBold" />
-              <TextBlock Text="{Binding DownText}" FontSize="18" FontFamily="{StaticResource MonoFont}" FontWeight="SemiBold"
-                         Foreground="{StaticResource DownBrush}" TextWrapping="NoWrap" />
-            </StackPanel>
-          </Border>
-          <Border Background="#EAF1FB" BorderBrush="#C5D6F0" BorderThickness="1" Padding="12,6" MinWidth="150">
-            <StackPanel>
-              <TextBlock Text="UPLOAD" FontSize="10" Foreground="{StaticResource UpBrush}" FontWeight="SemiBold" />
-              <TextBlock Text="{Binding UpText}" FontSize="18" FontFamily="{StaticResource MonoFont}" FontWeight="SemiBold"
-                         Foreground="{StaticResource UpBrush}" TextWrapping="NoWrap" />
-            </StackPanel>
-          </Border>
+          <StackPanel Margin="0,0,22,0" MinWidth="120">
+            <TextBlock Text="DOWNLOAD" FontSize="10" Foreground="#8FD4C0" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding DownText}" FontSize="18" FontFamily="{StaticResource MonoFont}" FontWeight="SemiBold"
+                       Foreground="White" TextWrapping="NoWrap" />
+          </StackPanel>
+          <StackPanel MinWidth="120">
+            <TextBlock Text="UPLOAD" FontSize="10" Foreground="#9DC4E8" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding UpText}" FontSize="18" FontFamily="{StaticResource MonoFont}" FontWeight="SemiBold"
+                       Foreground="White" TextWrapping="NoWrap" />
+          </StackPanel>
         </StackPanel>
 
         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-          <Button Style="{StaticResource GhostButton}" Content="Overlay" Click="ToggleOverlay_Click" Margin="0,0,8,0" />
-          <Button Style="{StaticResource GhostButton}" Content="Exportar" Click="Export_Click" Margin="0,0,8,0" />
+          <Button Style="{StaticResource HeaderButton}" Content="Widget" Click="ToggleOverlay_Click" Margin="0,0,8,0" />
+          <Button Style="{StaticResource HeaderButton}" Content="Exportar" Click="Export_Click" Margin="0,0,8,0" />
           <Button Style="{StaticResource AccentButton}" Content="Ajustes" Click="OpenSettings_Click" />
         </StackPanel>
       </Grid>
@@ -120,7 +116,7 @@
             Visibility="{Binding ShowChart, Converter={StaticResource BoolToVis}}">
       <DockPanel LastChildFill="True">
         <Grid DockPanel.Dock="Top" Margin="10,8,10,4">
-          <TextBlock Text="Tráfego" FontWeight="SemiBold" VerticalAlignment="Center" />
+          <TextBlock Text="TRÁFEGO" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
             <RadioButton Style="{StaticResource Segment}" Content="Linha" IsChecked="{Binding ChartLine}" />
             <RadioButton Style="{StaticResource Segment}" Content="Área" IsChecked="{Binding ChartArea}" />
@@ -137,7 +133,7 @@
         <ItemsControl ItemsSource="{Binding Processes}">
           <ItemsControl.ItemTemplate>
             <DataTemplate>
-              <Border Margin="0,0,0,8" Padding="12,10" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+              <Border Margin="0,0,0,1" Padding="10,8" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                 <StackPanel>
                   <Grid>
                     <Grid.ColumnDefinitions>
@@ -154,7 +150,7 @@
                       </Border>
                     </Grid>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" />
+                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" />
                       <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="11">
                         <Run Text="{Binding PidSummary, Mode=OneWay}" />
                         <Run Text=" · " />
@@ -200,7 +196,7 @@
         <ItemsControl ItemsSource="{Binding Addresses}">
           <ItemsControl.ItemTemplate>
             <DataTemplate>
-              <Border Margin="0,0,0,8" Padding="12,10" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+              <Border Margin="0,0,0,1" Padding="10,8" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
                 <StackPanel>
                   <Grid>
                     <Grid.ColumnDefinitions>
@@ -514,6 +510,13 @@
             <CheckBox Content="Mostrar widget" IsChecked="{Binding ShowOverlay}" />
             <CheckBox Content="Mostrar conexões no widget" IsChecked="{Binding OverlayShowConnections}" />
             <CheckBox Content="Mostrar IP público no widget" IsChecked="{Binding OverlayShowPublicIp}" />
+            <CheckBox Content="Mostrar gráfico no widget" IsChecked="{Binding OverlayShowChart}" />
+            <TextBlock Text="Gráfico do widget" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,6" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+              <RadioButton Style="{StaticResource Segment}" Content="Linha" IsChecked="{Binding OverlayChartLine}" />
+              <RadioButton Style="{StaticResource Segment}" Content="Área" IsChecked="{Binding OverlayChartArea}" />
+              <RadioButton Style="{StaticResource Segment}" Content="Barras" IsChecked="{Binding OverlayChartBar}" />
+            </StackPanel>
             <CheckBox Content="Clique atravessa o overlay" IsChecked="{Binding OverlayClickThrough}" />
             <CheckBox Content="Modo compacto" IsChecked="{Binding OverlayCompact}" />
             <CheckBox Content="Mostrar IP externo no programa" IsChecked="{Binding ShowPublicIp}" />

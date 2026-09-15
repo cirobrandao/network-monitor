@@ -23,6 +23,8 @@ public sealed class AppSettings
     public bool ShowPublicIp { get; set; } = true;
     public bool OverlayShowConnections { get; set; } = true;
     public bool OverlayShowPublicIp { get; set; } = true;
+    public bool OverlayShowChart { get; set; } = true;
+    public string OverlayChartType { get; set; } = "Area";
     public bool ShowChart { get; set; } = true;
     public string ChartType { get; set; } = "Area";
     public List<string> BlockedPrograms { get; set; } = [];

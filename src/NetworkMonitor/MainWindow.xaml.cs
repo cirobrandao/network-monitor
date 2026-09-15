@@ -36,7 +36,7 @@ public partial class MainWindow : Window
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
-        NetworkMonitor.Native.NativeWindow.ApplyCaptionTheme(this, dark: false);
+        NetworkMonitor.Native.NativeWindow.ApplyCaptionTheme(this, dark: true);
     }
 
     private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
