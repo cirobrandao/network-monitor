@@ -9,8 +9,8 @@
         ShowInTaskbar="False"
         Topmost="True"
         ResizeMode="NoResize"
-        Width="292"
-        Height="96"
+        Width="360"
+        Height="64"
         FontFamily="{StaticResource UiFont}">
   <Window.DataContext>
     <Binding Source="{x:Static local:AppState.Current}" />
@@ -27,46 +27,58 @@
   </Window.ContextMenu>
 
   <Border x:Name="Card"
-          CornerRadius="16"
           BorderThickness="1"
-          BorderBrush="#3A4A5C"
-          Background="#E010151C"
           MouseLeftButtonDown="Card_MouseLeftButtonDown"
           MouseLeftButtonUp="Card_MouseLeftButtonUp">
-    <Grid Margin="16,12">
+    <Border.Style>
+      <Style TargetType="Border">
+        <Setter Property="BorderBrush" Value="#C9D2DB" />
+        <Setter Property="Background" Value="#FFFFFFFF" />
+        <Style.Triggers>
+          <DataTrigger Binding="{Binding IsPeaking}" Value="True">
+            <Setter Property="BorderBrush" Value="#B42318" />
+            <Setter Property="Background" Value="#FFF8F4" />
+          </DataTrigger>
+        </Style.Triggers>
+      </Style>
+    </Border.Style>
+    <Grid Margin="12,8">
       <Grid.RowDefinitions>
-        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
           <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
-        <StackPanel>
-          <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-            <Polygon Points="0,0 7,0 3.5,6" Fill="#3DDC97" VerticalAlignment="Center" Margin="0,0,6,0" />
-            <TextBlock Text="DOWNLOAD" FontSize="10" FontWeight="SemiBold" Foreground="#3DDC97" />
-          </StackPanel>
-          <TextBlock Text="{Binding DownText}" FontSize="20" FontWeight="SemiBold" FontFamily="{StaticResource MonoFont}" Foreground="#F2F7FC" />
+        <StackPanel Orientation="Horizontal">
+          <Polygon Points="0,0 7,0 3.5,6" Fill="#1A8F5A" VerticalAlignment="Center" Margin="0,0,6,0" />
+          <TextBlock Text="{Binding DownText}" FontSize="15" FontWeight="SemiBold"
+                     FontFamily="{StaticResource MonoFont}" Foreground="#1A8F5A"
+                     TextWrapping="NoWrap" />
         </StackPanel>
-        <StackPanel Grid.Column="1">
-          <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-            <Polygon Points="3.5,0 7,6 0,6" Fill="#5B9DFF" VerticalAlignment="Center" Margin="0,0,6,0" />
-            <TextBlock Text="UPLOAD" FontSize="10" FontWeight="SemiBold" Foreground="#5B9DFF" />
-          </StackPanel>
-          <TextBlock Text="{Binding UpText}" FontSize="20" FontWeight="SemiBold" FontFamily="{StaticResource MonoFont}" Foreground="#F2F7FC" />
+        <StackPanel Grid.Column="1" Orientation="Horizontal">
+          <Polygon Points="3.5,0 7,6 0,6" Fill="#2B6BCF" VerticalAlignment="Center" Margin="0,0,6,0" />
+          <TextBlock Text="{Binding UpText}" FontSize="15" FontWeight="SemiBold"
+                     FontFamily="{StaticResource MonoFont}" Foreground="#2B6BCF"
+                     TextWrapping="NoWrap" />
         </StackPanel>
+        <TextBlock Grid.Column="2" Text="{Binding ConnectionCountText}"
+                   VerticalAlignment="Center" Margin="12,0,0,0"
+                   Foreground="#5E6B7A" FontSize="13" TextWrapping="NoWrap" />
       </Grid>
-      <Grid Grid.Row="1" Margin="0,6,0,0" Visibility="{Binding OverlayCompact, Converter={StaticResource BoolToVisInv}}">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="8" />
-          <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-        <Polyline Points="{Binding DownSpark}" Stroke="#3DDC97" StrokeThickness="1.5" Stretch="Fill" Height="22" />
-        <Polyline Grid.Column="2" Points="{Binding UpSpark}" Stroke="#5B9DFF" StrokeThickness="1.5" Stretch="Fill" Height="22" />
-      </Grid>
+      <DockPanel Grid.Row="1" Margin="0,4,0,0"
+                 Visibility="{Binding OverlayDetailsVisible, Converter={StaticResource BoolToVis}}">
+        <TextBlock Text="{Binding PeakText}" Foreground="#B42318" FontSize="11" FontWeight="SemiBold"
+                   Visibility="{Binding IsPeaking, Converter={StaticResource BoolToVis}}"
+                   Margin="0,0,10,0" TextWrapping="NoWrap" />
+        <TextBlock HorizontalAlignment="Right"
+                   Visibility="{Binding ShowPublicIp, Converter={StaticResource BoolToVis}}"
+                   Foreground="#5E6B7A" FontSize="12" FontFamily="{StaticResource MonoFont}"
+                   Text="{Binding PublicIp}" TextWrapping="NoWrap" />
+      </DockPanel>
     </Grid>
   </Border>
 </Window>

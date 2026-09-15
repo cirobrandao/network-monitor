@@ -5,18 +5,19 @@
              ShutdownMode="OnExplicitShutdown">
   <Application.Resources>
     <ResourceDictionary>
-      <FontFamily x:Key="UiFont">Segoe UI Variable Display, Segoe UI</FontFamily>
-      <FontFamily x:Key="MonoFont">Cascadia Mono, Consolas, Courier New</FontFamily>
+      <FontFamily x:Key="UiFont">Segoe UI, Segoe UI Variable Display</FontFamily>
+      <FontFamily x:Key="MonoFont">Consolas, Cascadia Mono, Courier New</FontFamily>
 
-      <Color x:Key="BgColor">#0B0F14</Color>
-      <Color x:Key="SurfaceColor">#141A22</Color>
-      <Color x:Key="Surface2Color">#1B2430</Color>
-      <Color x:Key="BorderColor">#2A3646</Color>
-      <Color x:Key="TextColor">#E7EEF7</Color>
-      <Color x:Key="MutedColor">#8B9BB0</Color>
-      <Color x:Key="DownColor">#3DDC97</Color>
-      <Color x:Key="UpColor">#5B9DFF</Color>
-      <Color x:Key="AccentColor">#4CC2FF</Color>
+      <Color x:Key="BgColor">#F3F5F7</Color>
+      <Color x:Key="SurfaceColor">#FFFFFF</Color>
+      <Color x:Key="Surface2Color">#E8ECF0</Color>
+      <Color x:Key="BorderColor">#C9D2DB</Color>
+      <Color x:Key="TextColor">#1C2430</Color>
+      <Color x:Key="MutedColor">#5E6B7A</Color>
+      <Color x:Key="DownColor">#1A8F5A</Color>
+      <Color x:Key="UpColor">#2B6BCF</Color>
+      <Color x:Key="AccentColor">#1F6FEB</Color>
+      <Color x:Key="PeakColor">#B42318</Color>
 
       <SolidColorBrush x:Key="BgBrush" Color="{StaticResource BgColor}" />
       <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
@@ -27,6 +28,7 @@
       <SolidColorBrush x:Key="DownBrush" Color="{StaticResource DownColor}" />
       <SolidColorBrush x:Key="UpBrush" Color="{StaticResource UpColor}" />
       <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+      <SolidColorBrush x:Key="PeakBrush" Color="{StaticResource PeakColor}" />
 
       <local:EnumToBoolConverter x:Key="EnumToBool" />
       <local:EnumToVisibilityConverter x:Key="EnumToVis" />
@@ -45,11 +47,11 @@
       </Style>
 
       <Style x:Key="GhostButton" TargetType="Button">
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Background" Value="{StaticResource SurfaceBrush}" />
         <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="12,7" />
+        <Setter Property="Padding" Value="12,6" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
           <Setter.Value>
@@ -58,13 +60,12 @@
                       Background="{TemplateBinding Background}"
                       BorderBrush="{TemplateBinding BorderBrush}"
                       BorderThickness="{TemplateBinding BorderThickness}"
-                      CornerRadius="8"
                       Padding="{TemplateBinding Padding}">
                 <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
               </Border>
               <ControlTemplate.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                  <Setter TargetName="bd" Property="Background" Value="#243041" />
+                  <Setter TargetName="bd" Property="Background" Value="#E8ECF0" />
                 </Trigger>
               </ControlTemplate.Triggers>
             </ControlTemplate>
@@ -73,8 +74,9 @@
       </Style>
 
       <Style x:Key="AccentButton" TargetType="Button" BasedOn="{StaticResource GhostButton}">
-        <Setter Property="Background" Value="#1A4CC2FF" />
-        <Setter Property="BorderBrush" Value="#554CC2FF" />
+        <Setter Property="Background" Value="#1F6FEB" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderBrush" Value="#1F6FEB" />
       </Style>
 
       <Style x:Key="Segment" TargetType="RadioButton">
@@ -84,16 +86,16 @@
         <Setter Property="Template">
           <Setter.Value>
             <ControlTemplate TargetType="RadioButton">
-              <Border x:Name="bd" CornerRadius="8" Padding="12,7" Background="Transparent">
+              <Border x:Name="bd" Padding="12,6" Background="Transparent">
                 <ContentPresenter HorizontalAlignment="Center" />
               </Border>
               <ControlTemplate.Triggers>
                 <Trigger Property="IsChecked" Value="True">
-                  <Setter TargetName="bd" Property="Background" Value="#243041" />
+                  <Setter TargetName="bd" Property="Background" Value="#DCE6F5" />
                   <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
                 </Trigger>
                 <Trigger Property="IsMouseOver" Value="True">
-                  <Setter TargetName="bd" Property="Background" Value="#1A2430" />
+                  <Setter TargetName="bd" Property="Background" Value="#E8ECF0" />
                 </Trigger>
               </ControlTemplate.Triggers>
             </ControlTemplate>
@@ -101,59 +103,23 @@
         </Setter>
       </Style>
 
-      <Style x:Key="Switch" TargetType="CheckBox">
+      <Style TargetType="CheckBox">
         <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-        <Setter Property="Cursor" Value="Hand" />
-        <Setter Property="Template">
-          <Setter.Value>
-            <ControlTemplate TargetType="CheckBox">
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <ContentPresenter VerticalAlignment="Center" Margin="0,0,12,0" />
-                <Border x:Name="track" Grid.Column="1" Width="40" Height="22" CornerRadius="11" Background="#2A3646">
-                  <Ellipse x:Name="thumb" Width="16" Height="16" Fill="#E7EEF7" HorizontalAlignment="Left" Margin="3,0,0,0" />
-                </Border>
-              </Grid>
-              <ControlTemplate.Triggers>
-                <Trigger Property="IsChecked" Value="True">
-                  <Setter TargetName="track" Property="Background" Value="#334CC2FF" />
-                  <Setter TargetName="thumb" Property="HorizontalAlignment" Value="Right" />
-                  <Setter TargetName="thumb" Property="Margin" Value="0,0,3,0" />
-                  <Setter TargetName="thumb" Property="Fill" Value="#4CC2FF" />
-                </Trigger>
-              </ControlTemplate.Triggers>
-            </ControlTemplate>
-          </Setter.Value>
-        </Setter>
+        <Setter Property="Margin" Value="0,0,0,8" />
       </Style>
 
       <Style TargetType="TextBox">
-        <Setter Property="Background" Value="#10161E" />
+        <Setter Property="Background" Value="White" />
         <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Padding" Value="8,6" />
         <Setter Property="CaretBrush" Value="{StaticResource AccentBrush}" />
-        <Setter Property="Template">
-          <Setter.Value>
-            <ControlTemplate TargetType="TextBox">
-              <Border Background="{TemplateBinding Background}"
-                      BorderBrush="{TemplateBinding BorderBrush}"
-                      BorderThickness="{TemplateBinding BorderThickness}"
-                      CornerRadius="8">
-                <ScrollViewer x:Name="PART_ContentHost" Margin="8,6" />
-              </Border>
-            </ControlTemplate>
-          </Setter.Value>
-        </Setter>
       </Style>
 
-      <Style TargetType="ScrollBar">
-        <Setter Property="Width" Value="10" />
-        <Setter Property="MinWidth" Value="10" />
+      <Style TargetType="Hyperlink">
+        <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+        <Setter Property="TextDecorations" Value="Underline" />
       </Style>
 
       <Style TargetType="Expander">

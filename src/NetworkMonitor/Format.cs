@@ -7,13 +7,34 @@ internal static class Format
     public static string Rate(double bytesPerSecond)
     {
         var value = Math.Max(0, bytesPerSecond);
-        return value switch
+        if (value >= 1024d * 1024d * 1024d)
+            return string.Format(CultureInfo.InvariantCulture, "{0:0.00} GB/s", value / (1024d * 1024d * 1024d));
+        if (value >= 1024d * 1024d)
+            return string.Format(CultureInfo.InvariantCulture, "{0:0.0} MB/s", value / (1024d * 1024d));
+        if (value >= 1024d)
         {
-            >= 1024d * 1024d * 1024d => string.Format(CultureInfo.InvariantCulture, "{0:0.00} GB/s", value / (1024d * 1024d * 1024d)),
-            >= 1024d * 1024d => string.Format(CultureInfo.InvariantCulture, "{0:0.00} MB/s", value / (1024d * 1024d)),
-            >= 1024d => string.Format(CultureInfo.InvariantCulture, "{0:0.0} KB/s", value / 1024d),
-            _ => string.Format(CultureInfo.InvariantCulture, "{0:0} B/s", value)
-        };
+            var kb = value / 1024d;
+            return kb >= 100
+                ? string.Format(CultureInfo.InvariantCulture, "{0:0} KB/s", kb)
+                : string.Format(CultureInfo.InvariantCulture, "{0:0.0} KB/s", kb);
+        }
+        return string.Format(CultureInfo.InvariantCulture, "{0:0} B/s", value);
+    }
+
+    public static string Ago(TimeSpan age)
+    {
+        if (age.TotalSeconds < 5) return "agora";
+        if (age.TotalSeconds < 60) return $"{(int)age.TotalSeconds}s";
+        if (age.TotalMinutes < 60) return $"{(int)age.TotalMinutes} min";
+        return $"{(int)age.TotalHours} h";
+    }
+
+    public static string Duration(TimeSpan span)
+    {
+        if (span.TotalSeconds < 1) return "<1s";
+        if (span.TotalSeconds < 60) return $"{(int)span.TotalSeconds}s";
+        if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes}m {span.Seconds}s";
+        return $"{(int)span.TotalHours}h {span.Minutes}m";
     }
 
     public static string State(string state) => state switch

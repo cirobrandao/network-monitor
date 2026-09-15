@@ -20,6 +20,11 @@ public sealed class AppSettings
     public bool HideLoopback { get; set; } = true;
     public bool HidePrivate { get; set; }
     public bool ResolveDns { get; set; } = true;
+    public bool ShowPublicIp { get; set; } = true;
+    public int ClosedRetentionMinutes { get; set; } = 10;
+    public bool PeakAlertEnabled { get; set; } = true;
+    public double PeakDownMBps { get; set; } = 10;
+    public double PeakUpMBps { get; set; } = 3;
     public List<string> DisabledAdapters { get; set; } = [];
     public bool FirstRun { get; set; } = true;
 }

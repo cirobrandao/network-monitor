@@ -22,7 +22,8 @@ public enum ViewMode
 {
     Connections,
     Processes,
-    Addresses
+    Addresses,
+    Closed
 }
 
 public sealed class NetConnection
@@ -70,6 +71,25 @@ public sealed class IpGroup
     public bool IsExpanded { get; set; }
     public string HostDisplay => string.IsNullOrWhiteSpace(HostName) ? "—" : HostName;
     public string CountLabel => $"{ConnectionCount} conexões · {Apps}";
+}
+
+public sealed class ClosedConnection
+{
+    public required string ProcessName { get; init; }
+    public ImageSource? Icon { get; init; }
+    public required int Pid { get; init; }
+    public required string ProtocolText { get; init; }
+    public required string LocalDisplay { get; init; }
+    public required string RemoteDisplay { get; init; }
+    public required string RemoteAddress { get; init; }
+    public string? HostName { get; init; }
+    public required AddressScope Scope { get; init; }
+    public required DateTime StartedAt { get; init; }
+    public required DateTime EndedAt { get; init; }
+    public required string EndedLabel { get; init; }
+    public required string DurationLabel { get; init; }
+    public required string AgoLabel { get; init; }
+    public string HostDisplay => string.IsNullOrWhiteSpace(HostName) ? "—" : HostName;
 }
 
 public sealed class AdapterRate

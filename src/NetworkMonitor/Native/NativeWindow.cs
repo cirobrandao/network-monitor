@@ -21,11 +21,11 @@ internal static class NativeWindow
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int value, int size);
 
-    public static void EnableDarkTitleBar(Window window)
+    public static void ApplyCaptionTheme(Window window, bool dark)
     {
         var hwnd = new WindowInteropHelper(window).Handle;
         if (hwnd == IntPtr.Zero) return;
-        var on = 1;
+        var on = dark ? 1 : 0;
         _ = DwmSetWindowAttribute(hwnd, DwmwaUseImmersiveDarkMode, ref on, sizeof(int));
     }
 

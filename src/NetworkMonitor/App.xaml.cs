@@ -19,6 +19,7 @@ public partial class App : Application
     private readonly BandwidthMonitor _bandwidth = new();
     private readonly ProcessResolver _processes = new();
     private readonly DnsResolver _dns = new();
+    private readonly PublicIpService _publicIp = new();
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -54,6 +55,7 @@ public partial class App : Application
 
         AppState.Current.OverlayVisibilityChanged += ApplyOverlayVisibility;
         AppState.Current.RefreshIntervalChanged += RestartLoop;
+        AppState.Current.PeakRaised += OnPeakRaised;
 
         ApplyOverlayVisibility();
         if (!AppState.Current.StartMinimized)
@@ -117,6 +119,8 @@ public partial class App : Application
             try
             {
                 var settings = AppState.Current.Settings;
+                if (settings.ShowPublicIp)
+                    await _publicIp.RefreshIfDueAsync().ConfigureAwait(false);
                 var bandwidth = _bandwidth.Capture(settings.DisabledAdapters);
                 var raw = IpHelper.GetAll(settings.ShowUdp);
                 var mapped = new List<(Native.RawConnection Row, ProcessInfo Process, AddressScope Scope, string? Host)>(raw.Count);
@@ -154,6 +158,7 @@ public partial class App : Application
                             Scope = item.Scope
                         });
                     }
+                    AppState.Current.SetPublicIp(_publicIp.Address);
                     AppState.Current.ApplySnapshot(bandwidth, connections);
                 });
             }
@@ -172,6 +177,14 @@ public partial class App : Application
                 break;
             }
         }
+    }
+
+    private void OnPeakRaised(string text)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            _tray?.ShowBalloonTip(4000, "Pico de consumo", text, Forms.ToolTipIcon.Warning);
+        });
     }
 
     private static void DumpConnections()

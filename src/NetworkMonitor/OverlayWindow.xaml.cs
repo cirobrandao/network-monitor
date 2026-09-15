@@ -25,7 +25,10 @@ public partial class OverlayWindow : Window
     public void ApplyStyle()
     {
         Opacity = AppState.Current.OverlayOpacity;
-        Height = AppState.Current.OverlayCompact ? 72 : 96;
+        Width = 360;
+        Height = AppState.Current.OverlayCompact
+            ? 44
+            : AppState.Current.OverlayDetailsVisible ? 70 : 48;
         if (IsLoaded)
             NetworkMonitor.Native.NativeWindow.ApplyOverlayStyle(this, AppState.Current.OverlayClickThrough);
     }

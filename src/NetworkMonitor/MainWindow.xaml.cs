@@ -1,7 +1,8 @@
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
+using System.Windows.Navigation;
 using Microsoft.Win32;
-using NetworkMonitor.Native;
 
 namespace NetworkMonitor;
 
@@ -35,7 +36,7 @@ public partial class MainWindow : Window
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
-        NetworkMonitor.Native.NativeWindow.EnableDarkTitleBar(this);
+        NetworkMonitor.Native.NativeWindow.ApplyCaptionTheme(this, dark: false);
     }
 
     private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
@@ -48,6 +49,12 @@ public partial class MainWindow : Window
         {
             AppState.Current.MarkFirstRunComplete();
         }
+    }
+
+    private void Site_RequestNavigate(object sender, RequestNavigateEventArgs e)
+    {
+        Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+        e.Handled = true;
     }
 
     private void ToggleOverlay_Click(object sender, RoutedEventArgs e)
