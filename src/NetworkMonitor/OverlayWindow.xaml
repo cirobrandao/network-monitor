@@ -1,0 +1,72 @@
+<Window x:Class="NetworkMonitor.OverlayWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:NetworkMonitor"
+        Title="Overlay"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        Topmost="True"
+        ResizeMode="NoResize"
+        Width="292"
+        Height="96"
+        FontFamily="{StaticResource UiFont}">
+  <Window.DataContext>
+    <Binding Source="{x:Static local:AppState.Current}" />
+  </Window.DataContext>
+  <Window.ContextMenu>
+    <ContextMenu>
+      <MenuItem Header="Abrir monitor" Click="OpenMain_Click" />
+      <MenuItem Header="Modo compacto" IsCheckable="True" IsChecked="{Binding OverlayCompact}" />
+      <MenuItem Header="Clique atravessa" IsCheckable="True" IsChecked="{Binding OverlayClickThrough}" />
+      <Separator />
+      <MenuItem Header="Esconder overlay" Click="HideOverlay_Click" />
+      <MenuItem Header="Sair" Click="Exit_Click" />
+    </ContextMenu>
+  </Window.ContextMenu>
+
+  <Border x:Name="Card"
+          CornerRadius="16"
+          BorderThickness="1"
+          BorderBrush="#3A4A5C"
+          Background="#E010151C"
+          MouseLeftButtonDown="Card_MouseLeftButtonDown"
+          MouseLeftButtonUp="Card_MouseLeftButtonUp">
+    <Grid Margin="16,12">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <StackPanel>
+          <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+            <Polygon Points="0,0 7,0 3.5,6" Fill="#3DDC97" VerticalAlignment="Center" Margin="0,0,6,0" />
+            <TextBlock Text="DOWNLOAD" FontSize="10" FontWeight="SemiBold" Foreground="#3DDC97" />
+          </StackPanel>
+          <TextBlock Text="{Binding DownText}" FontSize="20" FontWeight="SemiBold" FontFamily="{StaticResource MonoFont}" Foreground="#F2F7FC" />
+        </StackPanel>
+        <StackPanel Grid.Column="1">
+          <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+            <Polygon Points="3.5,0 7,6 0,6" Fill="#5B9DFF" VerticalAlignment="Center" Margin="0,0,6,0" />
+            <TextBlock Text="UPLOAD" FontSize="10" FontWeight="SemiBold" Foreground="#5B9DFF" />
+          </StackPanel>
+          <TextBlock Text="{Binding UpText}" FontSize="20" FontWeight="SemiBold" FontFamily="{StaticResource MonoFont}" Foreground="#F2F7FC" />
+        </StackPanel>
+      </Grid>
+      <Grid Grid.Row="1" Margin="0,6,0,0" Visibility="{Binding OverlayCompact, Converter={StaticResource BoolToVisInv}}">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="8" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Polyline Points="{Binding DownSpark}" Stroke="#3DDC97" StrokeThickness="1.5" Stretch="Fill" Height="22" />
+        <Polyline Grid.Column="2" Points="{Binding UpSpark}" Stroke="#5B9DFF" StrokeThickness="1.5" Stretch="Fill" Height="22" />
+      </Grid>
+    </Grid>
+  </Border>
+</Window>
