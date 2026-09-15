@@ -25,7 +25,7 @@ public partial class OverlayWindow : Window
     public void ApplyStyle()
     {
         Opacity = AppState.Current.OverlayOpacity;
-        Width = 360;
+        Width = AppState.Current.OverlayShowConnections ? 360 : 268;
         Height = AppState.Current.OverlayCompact
             ? 44
             : AppState.Current.OverlayDetailsVisible ? 70 : 48;

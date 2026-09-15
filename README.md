@@ -7,7 +7,9 @@ App nativo para Windows 11 que mostra **quem está conectado aonde** e um **over
 - Lista IPs remotos em uso (TCP, IPv4 e IPv6)
 - Mostra qual aplicativo/PID está usando cada IP
 - Agrupa a visão por aplicativo, por IP ou por conexão
-- Overlay compacto com download, upload, conexões ativas e IP externo
+- Overlay compacto com download, upload, conexões ativas e IP externo (cada item pode ser ocultado)
+- Gráfico de tráfego no programa (linha, área ou barras)
+- Teste de DNS e bloqueio de aplicativo/IP pelo Firewall do Windows
 - Histórico de conexões encerradas (5, 10 ou 30 minutos)
 - Alerta visual e na bandeja quando há pico de consumo
 - Ícone na bandeja do sistema (fechar a janela não encerra o app)

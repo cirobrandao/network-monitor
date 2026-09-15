@@ -19,6 +19,7 @@
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
@@ -35,7 +36,8 @@
           <Image Source="pack://application:,,,/Assets/app.png" Width="24" Height="24" Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality" />
           <StackPanel>
             <TextBlock Text="Network Monitor" FontSize="16" FontWeight="SemiBold" />
-            <TextBlock FontSize="12" Foreground="{StaticResource MutedBrush}">
+            <TextBlock FontSize="12" Foreground="{StaticResource MutedBrush}"
+                       Visibility="{Binding ShowPublicIp, Converter={StaticResource BoolToVis}}">
               <Run Text="IP externo:" />
               <Run Text="{Binding PublicIp, Mode=OneWay}" FontFamily="{StaticResource MonoFont}" />
             </TextBlock>
@@ -107,62 +109,86 @@
                          IsChecked="{Binding ViewMode, Converter={StaticResource EnumToBool}, ConverterParameter=Connections}" />
             <RadioButton Style="{StaticResource Segment}" Content="Encerradas"
                          IsChecked="{Binding ViewMode, Converter={StaticResource EnumToBool}, ConverterParameter=Closed}" />
+            <RadioButton Style="{StaticResource Segment}" Content="DNS"
+                         IsChecked="{Binding ViewMode, Converter={StaticResource EnumToBool}, ConverterParameter=Dns}" />
           </StackPanel>
         </Border>
       </Grid>
     </Border>
 
-    <Grid Grid.Row="3" Margin="12">
+    <Border Grid.Row="3" Margin="12,0,12,0" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+            Visibility="{Binding ShowChart, Converter={StaticResource BoolToVis}}">
+      <DockPanel LastChildFill="True">
+        <Grid DockPanel.Dock="Top" Margin="10,8,10,4">
+          <TextBlock Text="Tráfego" FontWeight="SemiBold" VerticalAlignment="Center" />
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <RadioButton Style="{StaticResource Segment}" Content="Linha" IsChecked="{Binding ChartLine}" />
+            <RadioButton Style="{StaticResource Segment}" Content="Área" IsChecked="{Binding ChartArea}" />
+            <RadioButton Style="{StaticResource Segment}" Content="Barras" IsChecked="{Binding ChartBar}" />
+          </StackPanel>
+        </Grid>
+        <local:BandwidthChart Height="140" DataContext="{Binding}" />
+      </DockPanel>
+    </Border>
+
+    <Grid Grid.Row="4" Margin="12">
       <ScrollViewer Visibility="{Binding ViewMode, Converter={StaticResource EnumToVis}, ConverterParameter=Processes}"
                     VerticalScrollBarVisibility="Auto">
         <ItemsControl ItemsSource="{Binding Processes}">
           <ItemsControl.ItemTemplate>
             <DataTemplate>
-              <Border Margin="0,0,0,6" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
-                <Expander IsExpanded="{Binding IsExpanded, Mode=TwoWay}" HorizontalContentAlignment="Stretch">
-                  <Expander.Header>
-                    <Grid Margin="4,4,8,4">
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                      </Grid.ColumnDefinitions>
-                      <Grid Width="22" Height="22" Margin="0,0,10,0">
-                        <Image Source="{Binding Icon}" Width="16" Height="16" Stretch="Uniform" />
-                        <Border Background="#E8ECF0" Visibility="{Binding Icon, Converter={StaticResource NullIcon}}">
-                          <TextBlock Text="•" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" />
-                        </Border>
-                      </Grid>
-                      <StackPanel Grid.Column="1">
-                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" />
-                        <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="11">
-                          <Run Text="{Binding PidSummary, Mode=OneWay}" />
-                          <Run Text=" · " />
-                          <Run Text="{Binding CountLabel, Mode=OneWay}" />
-                        </TextBlock>
-                      </StackPanel>
+              <Border Margin="0,0,0,8" Padding="12,10" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                <StackPanel>
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ToggleButton Style="{StaticResource ChevronToggle}" IsChecked="{Binding IsExpanded, Mode=TwoWay}" />
+                    <Grid Grid.Column="1" Width="22" Height="22" Margin="0,0,10,0">
+                      <Image Source="{Binding Icon}" Width="16" Height="16" Stretch="Uniform" />
+                      <Border Background="#E8ECF0" Visibility="{Binding Icon, Converter={StaticResource NullIcon}}">
+                        <TextBlock Text="•" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" />
+                      </Border>
                     </Grid>
-                  </Expander.Header>
-                  <ItemsControl ItemsSource="{Binding Connections}" Margin="36,0,12,8">
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="14" />
+                      <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="11">
+                        <Run Text="{Binding PidSummary, Mode=OneWay}" />
+                        <Run Text=" · " />
+                        <Run Text="{Binding CountLabel, Mode=OneWay}" />
+                      </TextBlock>
+                    </StackPanel>
+                    <Button Grid.Column="3" Style="{StaticResource BlockButton}" Content="{Binding BlockLabel}"
+                            Click="BlockProcess_Click" Tag="{Binding}" />
+                  </Grid>
+                  <ItemsControl ItemsSource="{Binding Connections}" Margin="38,8,0,0"
+                                Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate>
-                        <Grid Margin="0,3">
+                        <Grid Margin="0,4">
                           <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="70" />
                             <ColumnDefinition Width="220" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="140" />
                             <ColumnDefinition Width="110" />
+                            <ColumnDefinition Width="Auto" />
                           </Grid.ColumnDefinitions>
                           <TextBlock Text="{Binding ProtocolText}" Foreground="{StaticResource MutedBrush}" />
                           <TextBlock Grid.Column="1" Text="{Binding RemoteDisplay}" FontFamily="{StaticResource MonoFont}" />
                           <TextBlock Grid.Column="2" Text="{Binding HostDisplay}" Foreground="{StaticResource MutedBrush}" TextTrimming="CharacterEllipsis" />
                           <TextBlock Grid.Column="3" Text="{Binding State, Converter={StaticResource State}}" />
                           <TextBlock Grid.Column="4" Text="{Binding Scope, Converter={StaticResource Scope}}" Foreground="{Binding Scope, Converter={StaticResource ScopeBrush}}" />
+                          <Button Grid.Column="5" Style="{StaticResource BlockButton}" Content="Bloquear IP"
+                                  Click="BlockConnectionIp_Click" Tag="{Binding}" />
                         </Grid>
                       </DataTemplate>
                     </ItemsControl.ItemTemplate>
                   </ItemsControl>
-                </Expander>
+                </StackPanel>
               </Border>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
@@ -174,10 +200,16 @@
         <ItemsControl ItemsSource="{Binding Addresses}">
           <ItemsControl.ItemTemplate>
             <DataTemplate>
-              <Border Margin="0,0,0,6" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
-                <Expander IsExpanded="{Binding IsExpanded, Mode=TwoWay}" HorizontalContentAlignment="Stretch">
-                  <Expander.Header>
-                    <StackPanel Margin="4,4,8,4">
+              <Border Margin="0,0,0,8" Padding="12,10" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                <StackPanel>
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <ToggleButton Style="{StaticResource ChevronToggle}" IsChecked="{Binding IsExpanded, Mode=TwoWay}" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
                       <TextBlock Text="{Binding Address}" FontFamily="{StaticResource MonoFont}" FontSize="14" FontWeight="SemiBold" />
                       <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="12">
                         <Run Text="{Binding HostDisplay, Mode=OneWay}" />
@@ -187,26 +219,32 @@
                         <Run Text="{Binding CountLabel, Mode=OneWay}" />
                       </TextBlock>
                     </StackPanel>
-                  </Expander.Header>
-                  <ItemsControl ItemsSource="{Binding Connections}" Margin="16,0,12,8">
+                    <Button Grid.Column="2" Style="{StaticResource BlockButton}" Content="{Binding BlockLabel}"
+                            Click="BlockIp_Click" Tag="{Binding}" />
+                  </Grid>
+                  <ItemsControl ItemsSource="{Binding Connections}" Margin="38,8,0,0"
+                                Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate>
-                        <Grid Margin="0,3">
+                        <Grid Margin="0,4">
                           <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="220" />
                             <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="Auto" />
                           </Grid.ColumnDefinitions>
                           <Image Source="{Binding Icon}" Width="14" Height="14" Margin="0,0,8,0" />
                           <TextBlock Grid.Column="1" Text="{Binding ProcessName}" />
                           <TextBlock Grid.Column="2" Text="{Binding LocalDisplay}" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource MutedBrush}" />
                           <TextBlock Grid.Column="3" Text="{Binding State, Converter={StaticResource State}}" />
+                          <Button Grid.Column="4" Style="{StaticResource BlockButton}" Content="Bloquear app"
+                                  Click="BlockConnectionApp_Click" Tag="{Binding}" />
                         </Grid>
                       </DataTemplate>
                     </ItemsControl.ItemTemplate>
                   </ItemsControl>
-                </Expander>
+                </StackPanel>
               </Border>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
@@ -296,6 +334,10 @@
               <MenuItem Header="Copiar IP remoto" Click="CopyRemote_Click" />
               <MenuItem Header="Copiar aplicativo" Click="CopyProcess_Click" />
               <MenuItem Header="Copiar linha" Click="CopyRow_Click" />
+              <Separator />
+              <MenuItem Header="Bloquear aplicativo" Click="BlockSelectedApp_Click" />
+              <MenuItem Header="Bloquear IP" Click="BlockSelectedIp_Click" />
+              <MenuItem Header="Bloquear app neste IP" Click="BlockSelectedAppIp_Click" />
             </ContextMenu>
           </ListView.ContextMenu>
         </ListView>
@@ -368,9 +410,91 @@
           </ListView.ItemTemplate>
         </ListView>
       </DockPanel>
+
+      <ScrollViewer Visibility="{Binding ViewMode, Converter={StaticResource EnumToVis}, ConverterParameter=Dns}"
+                    VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+          <Border Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="14">
+            <StackPanel>
+              <TextBlock Text="Teste de DNS" FontSize="16" FontWeight="SemiBold" />
+              <TextBlock Text="Mede o tempo de resposta de servidores públicos e do DNS do sistema."
+                         Foreground="{StaticResource MutedBrush}" Margin="0,4,0,12" TextWrapping="Wrap" />
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox Text="{Binding DnsHosts, UpdateSourceTrigger=PropertyChanged}" />
+                <Button Grid.Column="1" Style="{StaticResource AccentButton}" Content="Testar DNS"
+                        Margin="10,0,0,0" Click="RunDns_Click" IsEnabled="{Binding DnsIdle}" />
+              </Grid>
+              <TextBlock Text="{Binding DnsStatus}" Margin="0,10,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
+            </StackPanel>
+          </Border>
+          <ItemsControl ItemsSource="{Binding DnsResults}" Margin="0,10,0,0">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="12,10" Margin="0,0,0,8">
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="160" />
+                      <ColumnDefinition Width="120" />
+                      <ColumnDefinition Width="90" />
+                      <ColumnDefinition Width="70" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                    <TextBlock Grid.Column="1" Text="{Binding Address}" FontFamily="{StaticResource MonoFont}" />
+                    <TextBlock Grid.Column="2" Text="{Binding AverageText}" FontWeight="SemiBold" />
+                    <TextBlock Grid.Column="3" Text="{Binding Status}" />
+                    <TextBlock Grid.Column="4" Text="{Binding SamplesText}" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
+                  </Grid>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+
+          <Border Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="14" Margin="0,8,0,0">
+            <StackPanel>
+              <TextBlock Text="Bloqueios de internet" FontSize="16" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding ElevationText}" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,10" TextWrapping="Wrap" />
+              <Button Style="{StaticResource GhostButton}" Content="Reiniciar como administrador"
+                      Click="RestartAdmin_Click" HorizontalAlignment="Left"
+                      Visibility="{Binding IsElevated, Converter={StaticResource BoolToVisInv}}" Margin="0,0,0,12" />
+              <ItemsControl ItemsSource="{Binding BlockRules}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Grid Margin="0,0,0,8">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
+                      <Button Grid.Column="1" Style="{StaticResource BlockButton}" Content="Remover"
+                              Click="RemoveBlock_Click" Tag="{Binding}" />
+                    </Grid>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock Text="Nenhum bloqueio ativo." Foreground="{StaticResource MutedBrush}">
+                <TextBlock.Style>
+                  <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                      <DataTrigger Binding="{Binding BlockRules.Count}" Value="0">
+                        <Setter Property="Visibility" Value="Visible" />
+                      </DataTrigger>
+                    </Style.Triggers>
+                  </Style>
+                </TextBlock.Style>
+              </TextBlock>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+      </ScrollViewer>
     </Grid>
 
-    <Border Grid.Row="4" Padding="16,8" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+    <Border Grid.Row="5" Padding="16,8" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
       <Grid>
         <TextBlock Text="{Binding StatusText}" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
         <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="12">
@@ -379,18 +503,21 @@
       </Grid>
     </Border>
 
-    <Grid Grid.RowSpan="5" Visibility="{Binding SettingsOpen, Converter={StaticResource BoolToVis}}">
+    <Grid Grid.RowSpan="6" Visibility="{Binding SettingsOpen, Converter={StaticResource BoolToVis}}">
       <Border Background="#66000000" MouseDown="CloseSettingsScrim_MouseDown" />
       <Border HorizontalAlignment="Right" Width="380" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,0,0" Padding="20">
         <ScrollViewer VerticalScrollBarVisibility="Auto">
           <StackPanel>
             <TextBlock Text="Ajustes" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16" />
 
-            <TextBlock Text="Overlay" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,8" />
-            <CheckBox Content="Mostrar overlay de velocidade" IsChecked="{Binding ShowOverlay}" />
+            <TextBlock Text="Widget" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,8" />
+            <CheckBox Content="Mostrar widget" IsChecked="{Binding ShowOverlay}" />
+            <CheckBox Content="Mostrar conexões no widget" IsChecked="{Binding OverlayShowConnections}" />
+            <CheckBox Content="Mostrar IP público no widget" IsChecked="{Binding OverlayShowPublicIp}" />
             <CheckBox Content="Clique atravessa o overlay" IsChecked="{Binding OverlayClickThrough}" />
             <CheckBox Content="Modo compacto" IsChecked="{Binding OverlayCompact}" />
-            <CheckBox Content="Mostrar IP externo" IsChecked="{Binding ShowPublicIp}" />
+            <CheckBox Content="Mostrar IP externo no programa" IsChecked="{Binding ShowPublicIp}" />
+            <CheckBox Content="Mostrar gráfico no programa" IsChecked="{Binding ShowChart}" />
             <TextBlock Text="Opacidade" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,4,0,4" />
             <Slider Minimum="0.45" Maximum="1" Value="{Binding OverlayOpacity}" TickFrequency="0.05" IsSnapToTickEnabled="True" Margin="0,0,0,16" />
 

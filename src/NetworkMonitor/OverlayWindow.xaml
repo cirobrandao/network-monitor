@@ -18,10 +18,12 @@
   <Window.ContextMenu>
     <ContextMenu>
       <MenuItem Header="Abrir monitor" Click="OpenMain_Click" />
+      <MenuItem Header="Mostrar conexões" IsCheckable="True" IsChecked="{Binding OverlayShowConnections}" />
+      <MenuItem Header="Mostrar IP público" IsCheckable="True" IsChecked="{Binding OverlayShowPublicIp}" />
       <MenuItem Header="Modo compacto" IsCheckable="True" IsChecked="{Binding OverlayCompact}" />
       <MenuItem Header="Clique atravessa" IsCheckable="True" IsChecked="{Binding OverlayClickThrough}" />
       <Separator />
-      <MenuItem Header="Esconder overlay" Click="HideOverlay_Click" />
+      <MenuItem Header="Ocultar widget" Click="HideOverlay_Click" />
       <MenuItem Header="Sair" Click="Exit_Click" />
     </ContextMenu>
   </Window.ContextMenu>
@@ -67,7 +69,8 @@
         </StackPanel>
         <TextBlock Grid.Column="2" Text="{Binding ConnectionCountText}"
                    VerticalAlignment="Center" Margin="12,0,0,0"
-                   Foreground="#5E6B7A" FontSize="13" TextWrapping="NoWrap" />
+                   Foreground="#5E6B7A" FontSize="13" TextWrapping="NoWrap"
+                   Visibility="{Binding OverlayShowConnections, Converter={StaticResource BoolToVis}}" />
       </Grid>
       <DockPanel Grid.Row="1" Margin="0,4,0,0"
                  Visibility="{Binding OverlayDetailsVisible, Converter={StaticResource BoolToVis}}">
@@ -75,7 +78,7 @@
                    Visibility="{Binding IsPeaking, Converter={StaticResource BoolToVis}}"
                    Margin="0,0,10,0" TextWrapping="NoWrap" />
         <TextBlock HorizontalAlignment="Right"
-                   Visibility="{Binding ShowPublicIp, Converter={StaticResource BoolToVis}}"
+                   Visibility="{Binding OverlayShowPublicIp, Converter={StaticResource BoolToVis}}"
                    Foreground="#5E6B7A" FontSize="12" FontFamily="{StaticResource MonoFont}"
                    Text="{Binding PublicIp}" TextWrapping="NoWrap" />
       </DockPanel>

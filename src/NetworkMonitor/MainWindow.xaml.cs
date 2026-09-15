@@ -106,4 +106,81 @@ public partial class MainWindow : Window
                 $"{connection.ProcessName}\t{connection.Pid}\t{connection.ProtocolText}\t{connection.LocalDisplay}\t{connection.RemoteDisplay}\t{connection.HostDisplay}\t{Format.State(connection.State)}");
         }
     }
+
+    private void BlockProcess_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button { Tag: ProcessGroup group })
+            ShowBlockResult(AppState.Current.ToggleBlockProgram(group));
+    }
+
+    private void BlockIp_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button { Tag: IpGroup group })
+            ShowBlockResult(AppState.Current.ToggleBlockAddress(group.Address));
+    }
+
+    private void BlockConnectionIp_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button { Tag: NetConnection connection })
+            ShowBlockResult(AppState.Current.ToggleBlockAddress(connection.RemoteAddress));
+    }
+
+    private void BlockConnectionApp_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button { Tag: NetConnection connection })
+        {
+            ShowBlockResult(AppState.Current.ToggleBlockProgram(new ProcessGroup
+            {
+                Name = connection.ProcessName,
+                Path = connection.ProcessPath,
+                PidSummary = "",
+                ConnectionCount = 0,
+                IpCount = 0,
+                Connections = Array.Empty<NetConnection>()
+            }));
+        }
+    }
+
+    private void BlockSelectedApp_Click(object sender, RoutedEventArgs e)
+    {
+        if (ConnectionsList.SelectedItem is NetConnection connection)
+        {
+            ShowBlockResult(AppState.Current.ToggleBlockProgram(new ProcessGroup
+            {
+                Name = connection.ProcessName,
+                Path = connection.ProcessPath,
+                PidSummary = "",
+                ConnectionCount = 0,
+                IpCount = 0,
+                Connections = Array.Empty<NetConnection>()
+            }));
+        }
+    }
+
+    private void BlockSelectedIp_Click(object sender, RoutedEventArgs e)
+    {
+        if (ConnectionsList.SelectedItem is NetConnection connection)
+            ShowBlockResult(AppState.Current.ToggleBlockAddress(connection.RemoteAddress));
+    }
+
+    private void BlockSelectedAppIp_Click(object sender, RoutedEventArgs e)
+    {
+        if (ConnectionsList.SelectedItem is NetConnection connection)
+            ShowBlockResult(AppState.Current.ToggleBlockProgramAddress(connection.ProcessPath, connection.RemoteAddress));
+    }
+
+    private void RemoveBlock_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button { Tag: BlockRule rule })
+            ShowBlockResult(AppState.Current.RemoveBlock(rule));
+    }
+
+    private async void RunDns_Click(object sender, RoutedEventArgs e)
+        => await AppState.Current.RunDnsTestAsync();
+
+    private void RestartAdmin_Click(object sender, RoutedEventArgs e)
+        => (System.Windows.Application.Current as App)?.RestartElevated();
+
+    private static void ShowBlockResult(string message)
+        => System.Windows.MessageBox.Show(message, "Network Monitor", MessageBoxButton.OK, MessageBoxImage.Information);
 }

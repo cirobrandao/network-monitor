@@ -21,6 +21,13 @@ public sealed class AppSettings
     public bool HidePrivate { get; set; }
     public bool ResolveDns { get; set; } = true;
     public bool ShowPublicIp { get; set; } = true;
+    public bool OverlayShowConnections { get; set; } = true;
+    public bool OverlayShowPublicIp { get; set; } = true;
+    public bool ShowChart { get; set; } = true;
+    public string ChartType { get; set; } = "Area";
+    public List<string> BlockedPrograms { get; set; } = [];
+    public List<string> BlockedAddresses { get; set; } = [];
+    public List<string> BlockedProgramAddresses { get; set; } = [];
     public int ClosedRetentionMinutes { get; set; } = 10;
     public bool PeakAlertEnabled { get; set; } = true;
     public double PeakDownMBps { get; set; } = 10;

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Windows;
@@ -23,6 +24,15 @@ public partial class App : Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        DispatcherUnhandledException += (_, args) =>
+        {
+            File.WriteAllText(Path.Combine(Path.GetTempPath(), "network-monitor-crash.txt"), args.Exception.ToString());
+            args.Handled = false;
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            File.WriteAllText(Path.Combine(Path.GetTempPath(), "network-monitor-crash.txt"), args.ExceptionObject.ToString());
+        };
         base.OnStartup(e);
 
         if (e.Args.Any(a => string.Equals(a, "--dump", StringComparison.OrdinalIgnoreCase)))
@@ -66,6 +76,24 @@ public partial class App : Application
     }
 
     public void ShowMainWindow() => _main?.RestoreFromTray();
+
+    public void RestartElevated()
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = Environment.ProcessPath,
+                UseShellExecute = true,
+                Verb = "runas"
+            });
+            ExitApp();
+        }
+        catch
+        {
+            // UAC cancelado
+        }
+    }
 
     public void ExitApp()
     {
@@ -215,7 +243,7 @@ public partial class App : Application
 
         var menu = new Forms.ContextMenuStrip();
         menu.Items.Add("Abrir", null, (_, _) => _main?.RestoreFromTray());
-        menu.Items.Add("Mostrar overlay", null, (_, _) => AppState.Current.ShowOverlay = !AppState.Current.ShowOverlay);
+        menu.Items.Add("Mostrar widget", null, (_, _) => AppState.Current.ShowOverlay = !AppState.Current.ShowOverlay);
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("Sair", null, (_, _) => ExitApp());
         _tray.ContextMenuStrip = menu;

@@ -23,7 +23,15 @@ public enum ViewMode
     Connections,
     Processes,
     Addresses,
-    Closed
+    Closed,
+    Dns
+}
+
+public enum ChartKind
+{
+    Line,
+    Area,
+    Bar
 }
 
 public sealed class NetConnection
@@ -48,29 +56,48 @@ public sealed class NetConnection
     public string Key => $"{Protocol}|{Pid}|{LocalDisplay}|{RemoteDisplay}";
 }
 
-public sealed class ProcessGroup
+public sealed class ProcessGroup : ObservableObject
 {
+    private bool _isExpanded;
+
     public required string Name { get; init; }
     public ImageSource? Icon { get; init; }
+    public string? Path { get; init; }
     public required string PidSummary { get; init; }
     public required int ConnectionCount { get; init; }
     public required int IpCount { get; init; }
     public required IReadOnlyList<NetConnection> Connections { get; init; }
-    public bool IsExpanded { get; set; }
+    public bool IsBlocked { get; init; }
     public string CountLabel => $"{ConnectionCount} conexões · {IpCount} IPs";
+    public string BlockLabel => IsBlocked ? "Desbloquear" : "Bloquear";
+
+    public bool IsExpanded
+    {
+        get => _isExpanded;
+        set => Set(ref _isExpanded, value);
+    }
 }
 
-public sealed class IpGroup
+public sealed class IpGroup : ObservableObject
 {
+    private bool _isExpanded;
+
     public required string Address { get; init; }
     public string? HostName { get; init; }
     public required AddressScope Scope { get; init; }
     public required int ConnectionCount { get; init; }
     public required string Apps { get; init; }
     public required IReadOnlyList<NetConnection> Connections { get; init; }
-    public bool IsExpanded { get; set; }
+    public bool IsBlocked { get; init; }
     public string HostDisplay => string.IsNullOrWhiteSpace(HostName) ? "—" : HostName;
     public string CountLabel => $"{ConnectionCount} conexões · {Apps}";
+    public string BlockLabel => IsBlocked ? "Desbloquear IP" : "Bloquear IP";
+
+    public bool IsExpanded
+    {
+        get => _isExpanded;
+        set => Set(ref _isExpanded, value);
+    }
 }
 
 public sealed class ClosedConnection
@@ -90,6 +117,22 @@ public sealed class ClosedConnection
     public required string DurationLabel { get; init; }
     public required string AgoLabel { get; init; }
     public string HostDisplay => string.IsNullOrWhiteSpace(HostName) ? "—" : HostName;
+}
+
+public sealed class DnsServerRow
+{
+    public required string Name { get; init; }
+    public required string Address { get; init; }
+    public required string AverageText { get; init; }
+    public required string Status { get; init; }
+    public required string SamplesText { get; init; }
+}
+
+public sealed class BlockRule
+{
+    public required string Kind { get; init; }
+    public required string Label { get; init; }
+    public required string Key { get; init; }
 }
 
 public sealed class AdapterRate

@@ -40,6 +40,13 @@ public sealed class AppState : ObservableObject
     private string _publicIp = "—";
     private bool _isPeaking;
     private string _peakText = "";
+    private IReadOnlyList<double> _downHistory = [];
+    private IReadOnlyList<double> _upHistory = [];
+    private IReadOnlyList<DnsServerRow> _dnsResults = [];
+    private IReadOnlyList<BlockRule> _blockRules = [];
+    private string _dnsHosts = "google.com, cloudflare.com, microsoft.com, cirobrandao.com.br";
+    private string _dnsStatus = "Clique em Testar DNS para medir os servidores.";
+    private bool _dnsBusy;
     private List<NetConnection> _raw = [];
 
     public AppSettings Settings { get; private set; } = new();
@@ -68,7 +75,30 @@ public sealed class AppState : ObservableObject
     public string PublicIp { get => _publicIp; private set => Set(ref _publicIp, value); }
     public bool IsPeaking { get => _isPeaking; private set => Set(ref _isPeaking, value); }
     public string PeakText { get => _peakText; private set => Set(ref _peakText, value); }
-    public bool OverlayDetailsVisible => !Settings.OverlayCompact && (Settings.ShowPublicIp || IsPeaking);
+    public IReadOnlyList<double> DownHistory { get => _downHistory; private set => Set(ref _downHistory, value); }
+    public IReadOnlyList<double> UpHistory { get => _upHistory; private set => Set(ref _upHistory, value); }
+    public IReadOnlyList<DnsServerRow> DnsResults { get => _dnsResults; private set => Set(ref _dnsResults, value); }
+    public IReadOnlyList<BlockRule> BlockRules { get => _blockRules; private set => Set(ref _blockRules, value); }
+    public string DnsStatus { get => _dnsStatus; private set => Set(ref _dnsStatus, value); }
+    public bool DnsBusy
+    {
+        get => _dnsBusy;
+        private set
+        {
+            if (Set(ref _dnsBusy, value))
+                Raise(nameof(DnsIdle));
+        }
+    }
+    public bool DnsIdle => !DnsBusy;
+    public bool IsElevated { get; } = FirewallService.IsElevated;
+    public string ElevationText => IsElevated ? "Executando como administrador" : "Sem administrador — bloqueios precisam de elevação";
+    public bool OverlayDetailsVisible => !Settings.OverlayCompact && (Settings.OverlayShowPublicIp || IsPeaking);
+
+    public string DnsHosts
+    {
+        get => _dnsHosts;
+        set => Set(ref _dnsHosts, value ?? "");
+    }
 
     public string Search
     {
@@ -243,10 +273,80 @@ public sealed class AppState : ObservableObject
             if (Settings.ShowPublicIp == value) return;
             Settings.ShowPublicIp = value;
             Raise();
+            Persist();
+        }
+    }
+
+    public bool OverlayShowConnections
+    {
+        get => Settings.OverlayShowConnections;
+        set
+        {
+            if (Settings.OverlayShowConnections == value) return;
+            Settings.OverlayShowConnections = value;
+            Raise();
+            OverlayStyleChanged?.Invoke();
+            Persist();
+        }
+    }
+
+    public bool OverlayShowPublicIp
+    {
+        get => Settings.OverlayShowPublicIp;
+        set
+        {
+            if (Settings.OverlayShowPublicIp == value) return;
+            Settings.OverlayShowPublicIp = value;
+            Raise();
             Raise(nameof(OverlayDetailsVisible));
             OverlayStyleChanged?.Invoke();
             Persist();
         }
+    }
+
+    public bool ShowChart
+    {
+        get => Settings.ShowChart;
+        set
+        {
+            if (Settings.ShowChart == value) return;
+            Settings.ShowChart = value;
+            Raise();
+            Persist();
+        }
+    }
+
+    public ChartKind ChartType
+    {
+        get => Enum.TryParse<ChartKind>(Settings.ChartType, true, out var kind) ? kind : ChartKind.Area;
+        set
+        {
+            if (ChartType == value) return;
+            Settings.ChartType = value.ToString();
+            Raise();
+            Raise(nameof(ChartLine));
+            Raise(nameof(ChartArea));
+            Raise(nameof(ChartBar));
+            Persist();
+        }
+    }
+
+    public bool ChartLine
+    {
+        get => ChartType == ChartKind.Line;
+        set { if (value) ChartType = ChartKind.Line; }
+    }
+
+    public bool ChartArea
+    {
+        get => ChartType == ChartKind.Area;
+        set { if (value) ChartType = ChartKind.Area; }
+    }
+
+    public bool ChartBar
+    {
+        get => ChartType == ChartKind.Bar;
+        set { if (value) ChartType = ChartKind.Bar; }
     }
 
     public bool PeakAlertEnabled
@@ -361,6 +461,11 @@ public sealed class AppState : ObservableObject
             Settings.ClosedRetentionMinutes = 10;
         if (Settings.PeakDownMBps < 0) Settings.PeakDownMBps = 10;
         if (Settings.PeakUpMBps < 0) Settings.PeakUpMBps = 3;
+        Settings.BlockedPrograms ??= [];
+        Settings.BlockedAddresses ??= [];
+        Settings.BlockedProgramAddresses ??= [];
+        if (string.IsNullOrWhiteSpace(Settings.ChartType))
+            Settings.ChartType = "Area";
         StartupManager.Apply(Settings.StartWithWindows);
         _persistReady = true;
         Raise(nameof(ShowOverlay));
@@ -375,7 +480,17 @@ public sealed class AppState : ObservableObject
         Raise(nameof(HidePrivate));
         Raise(nameof(ResolveDns));
         Raise(nameof(ShowPublicIp));
+        Raise(nameof(OverlayShowConnections));
+        Raise(nameof(OverlayShowPublicIp));
+        Raise(nameof(ShowChart));
+        Raise(nameof(ChartType));
+        Raise(nameof(ChartLine));
+        Raise(nameof(ChartArea));
+        Raise(nameof(ChartBar));
         Raise(nameof(OverlayDetailsVisible));
+        Raise(nameof(IsElevated));
+        Raise(nameof(ElevationText));
+        RefreshBlockRules();
         Raise(nameof(PeakAlertEnabled));
         Raise(nameof(PeakDownText));
         Raise(nameof(PeakUpText));
@@ -427,6 +542,141 @@ public sealed class AppState : ObservableObject
         if (!Settings.FirstRun) return;
         Settings.FirstRun = false;
         Persist();
+    }
+
+    public string ToggleBlockProgram(ProcessGroup group)
+    {
+        if (string.IsNullOrWhiteSpace(group.Path))
+            return "Este processo não tem caminho de executável.";
+        return ToggleBlocked(Settings.BlockedPrograms, group.Path, block => FirewallService.BlockProgram(block), FirewallService.UnblockProgram);
+    }
+
+    public string ToggleBlockAddress(string ip)
+    {
+        if (string.IsNullOrWhiteSpace(ip) || ip == "—")
+            return "IP inválido.";
+        return ToggleBlocked(Settings.BlockedAddresses, ip, FirewallService.BlockAddress, FirewallService.UnblockAddress);
+    }
+
+    public string ToggleBlockProgramAddress(string? path, string ip)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+            return "Este processo não tem caminho de executável.";
+        if (string.IsNullOrWhiteSpace(ip) || ip == "—")
+            return "IP inválido.";
+        var key = path + "|" + ip;
+        return ToggleBlocked(
+            Settings.BlockedProgramAddresses,
+            key,
+            _ => FirewallService.BlockProgramAddress(path, ip),
+            _ => FirewallService.UnblockProgramAddress(path, ip));
+    }
+
+    public string RemoveBlock(BlockRule rule)
+    {
+        if (rule.Kind == "App")
+            return ToggleBlocked(Settings.BlockedPrograms, rule.Key, FirewallService.BlockProgram, FirewallService.UnblockProgram);
+        if (rule.Kind == "IP")
+            return ToggleBlocked(Settings.BlockedAddresses, rule.Key, FirewallService.BlockAddress, FirewallService.UnblockAddress);
+        var parts = rule.Key.Split('|');
+        if (parts.Length != 2)
+            return "Regra inválida.";
+        return ToggleBlocked(
+            Settings.BlockedProgramAddresses,
+            rule.Key,
+            _ => FirewallService.BlockProgramAddress(parts[0], parts[1]),
+            _ => FirewallService.UnblockProgramAddress(parts[0], parts[1]));
+    }
+
+    public async Task RunDnsTestAsync()
+    {
+        if (DnsBusy)
+            return;
+        DnsBusy = true;
+        DnsStatus = "Testando servidores DNS…";
+        var hosts = DnsHosts.Split([',', ';', ' '], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (hosts.Length == 0)
+            hosts = ["google.com"];
+        try
+        {
+            var servers = DnsProbeService.DefaultServers();
+            var rows = new List<DnsServerRow>();
+            foreach (var server in servers)
+            {
+                var result = await DnsProbeService.ProbeServerAsync(server, hosts, CancellationToken.None);
+                rows.Add(new DnsServerRow
+                {
+                    Name = result.Name,
+                    Address = result.Address,
+                    AverageText = result.AverageText,
+                    Status = result.Status,
+                    SamplesText = string.Join("   ", result.Samples.Select(s => $"{s.Host} {s.Result}"))
+                });
+            }
+            DnsResults = rows.OrderBy(r => r.AverageText == "—" ? 99999 : 0)
+                .ThenBy(r => r.AverageText)
+                .ToList();
+            var best = DnsResults.FirstOrDefault(r => r.AverageText != "—");
+            DnsStatus = best is null
+                ? "Nenhum servidor respondeu."
+                : $"Mais rápido: {best.Name} ({best.Address}) — {best.AverageText}";
+        }
+        catch (Exception ex)
+        {
+            DnsStatus = "Falha no teste: " + ex.Message;
+        }
+        finally
+        {
+            DnsBusy = false;
+        }
+    }
+
+    private string ToggleBlocked(
+        List<string> list,
+        string key,
+        Func<string, bool> block,
+        Func<string, bool> unblock)
+    {
+        if (!FirewallService.IsElevated)
+            return "O Firewall do Windows exige executar o monitor como administrador.";
+
+        var exists = list.Contains(key, StringComparer.OrdinalIgnoreCase);
+        var ok = exists ? unblock(key) : block(key);
+        if (!ok)
+            return FirewallService.LastError ?? "Não foi possível alterar a regra do firewall.";
+
+        if (exists)
+            list.RemoveAll(item => string.Equals(item, key, StringComparison.OrdinalIgnoreCase));
+        else
+            list.Add(key);
+        Persist();
+        RefreshBlockRules();
+        RebuildViews();
+        return exists ? "Bloqueio removido." : "Bloqueio aplicado. Conexões já abertas podem continuar até fecharem.";
+    }
+
+    private void RefreshBlockRules()
+    {
+        var rules = new List<BlockRule>();
+        foreach (var path in Settings.BlockedPrograms)
+        {
+            rules.Add(new BlockRule
+            {
+                Kind = "App",
+                Key = path,
+                Label = "App · " + (System.IO.Path.GetFileName(path) ?? path)
+            });
+        }
+        foreach (var ip in Settings.BlockedAddresses)
+            rules.Add(new BlockRule { Kind = "IP", Key = ip, Label = "IP · " + ip });
+        foreach (var item in Settings.BlockedProgramAddresses)
+        {
+            var parts = item.Split('|');
+            var name = parts.Length > 0 ? System.IO.Path.GetFileName(parts[0]) : item;
+            var ip = parts.Length > 1 ? parts[1] : "";
+            rules.Add(new BlockRule { Kind = "AppIP", Key = item, Label = $"{name} → {ip}" });
+        }
+        BlockRules = rules;
     }
 
     public void ExportCsv(string path)
@@ -566,15 +816,21 @@ public sealed class AppState : ObservableObject
         Processes = list
             .GroupBy(c => c.ProcessName, StringComparer.OrdinalIgnoreCase)
             .OrderByDescending(g => g.Count())
-            .Select(g => new ProcessGroup
+            .Select(g =>
             {
-                Name = g.Key,
-                Icon = g.Select(x => x.Icon).FirstOrDefault(x => x is not null),
-                PidSummary = "PID " + string.Join(", ", g.Select(x => x.Pid).Distinct().OrderBy(x => x)),
-                ConnectionCount = g.Count(),
-                IpCount = g.Select(x => x.RemoteAddress).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
-                Connections = g.ToList(),
-                IsExpanded = _expandedProcesses.Contains(g.Key)
+                var path = g.Select(x => x.ProcessPath).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+                return new ProcessGroup
+                {
+                    Name = g.Key,
+                    Icon = g.Select(x => x.Icon).FirstOrDefault(x => x is not null),
+                    Path = path,
+                    PidSummary = "PID " + string.Join(", ", g.Select(x => x.Pid).Distinct().OrderBy(x => x)),
+                    ConnectionCount = g.Count(),
+                    IpCount = g.Select(x => x.RemoteAddress).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
+                    Connections = g.ToList(),
+                    IsExpanded = _expandedProcesses.Contains(g.Key),
+                    IsBlocked = path is not null && Settings.BlockedPrograms.Contains(path, StringComparer.OrdinalIgnoreCase)
+                };
             })
             .ToList();
 
@@ -590,7 +846,8 @@ public sealed class AppState : ObservableObject
                 ConnectionCount = g.Count(),
                 Apps = string.Join(", ", g.Select(x => x.ProcessName).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x, StringComparer.OrdinalIgnoreCase)),
                 Connections = g.ToList(),
-                IsExpanded = _expandedAddresses.Contains(g.Key)
+                IsExpanded = _expandedAddresses.Contains(g.Key),
+                IsBlocked = Settings.BlockedAddresses.Contains(g.Key, StringComparer.OrdinalIgnoreCase)
             })
             .ToList();
 
@@ -673,6 +930,9 @@ public sealed class AppState : ObservableObject
             _histCount++;
         DownSpark = ToPoints(_downHist, _histCount);
         UpSpark = ToPoints(_upHist, _histCount);
+        var start = _downHist.Length - Math.Max(_histCount, 1);
+        DownHistory = _downHist.Skip(start).ToArray();
+        UpHistory = _upHist.Skip(start).ToArray();
     }
 
     private static void Shift(double[] values, double incoming)
