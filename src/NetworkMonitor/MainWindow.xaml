@@ -60,6 +60,7 @@
         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
           <Button Style="{StaticResource HeaderButton}" Content="Widget" Click="ToggleOverlay_Click" Margin="0,0,8,0" />
           <Button Style="{StaticResource HeaderButton}" Content="Exportar" Click="Export_Click" Margin="0,0,8,0" />
+          <Button Style="{StaticResource GhostButton}" Content="Atualizar" Click="CheckUpdates_Click" Margin="0,0,8,0" ToolTip="Verificar atualizacoes no GitHub" />
           <Button Style="{StaticResource AccentButton}" Content="Ajustes" Click="OpenSettings_Click" />
         </StackPanel>
       </Grid>

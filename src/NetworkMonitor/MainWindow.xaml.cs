@@ -4,6 +4,8 @@ using System.Windows.Input;
 using System.Windows.Navigation;
 using Microsoft.Win32;
 
+using NetworkMonitor.Services;
+
 namespace NetworkMonitor;
 
 public partial class MainWindow : Window
@@ -183,4 +185,18 @@ public partial class MainWindow : Window
 
     private static void ShowBlockResult(string message)
         => System.Windows.MessageBox.Show(message, "Network Monitor", MessageBoxButton.OK, MessageBoxImage.Information);
+
+    private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is System.Windows.Controls.Button btn)
+        {
+            btn.IsEnabled = false;
+            try { await UpdateUi.CheckAndPromptAsync(quietWhenCurrent: false); }
+            finally { btn.IsEnabled = true; }
+        }
+        else
+        {
+            await UpdateUi.CheckAndPromptAsync(quietWhenCurrent: false);
+        }
+    }
 }

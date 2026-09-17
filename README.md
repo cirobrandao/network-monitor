@@ -40,3 +40,20 @@ O app fica em `dist\NetworkMonitor.exe` junto com as DLLs. Para um único arquiv
 ```powershell
 .\scripts\build.ps1 -SingleFile
 ```
+
+## Atualizacao automatica (GitHub Releases)
+
+O app consulta `https://github.com/cirobrandao/network-monitor/releases/latest` na abertura e pelo botao **Atualizar**.
+
+- Nao precisa de servidor proprio: usa a CDN do GitHub.
+- Nao usa `git` no PC do usuario.
+- Pacote esperado na release: `NetworkMonitor-win-x64.zip` (conteudo da pasta `dist\`).
+
+### Publicar uma versao
+
+```powershell
+# exige gh autenticado
+.\scripts\release.ps1 -Version 1.1.0
+```
+
+Isso compila, gera o zip, cria a tag `v1.1.0` e a release com o asset.

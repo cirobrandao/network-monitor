@@ -88,6 +88,13 @@ public partial class App : Application
         _ = Task.Run(() => RunLoopAsync(samplingToken));
         _publicIpCts = new CancellationTokenSource();
         _ = RunPublicIpLoopAsync(_publicIpCts.Token);
+
+        // Auto-update: silent unless a newer GitHub Release exists
+        _ = Dispatcher.InvokeAsync(async () =>
+        {
+            try { await UpdateUi.CheckAndPromptAsync(quietWhenCurrent: true); }
+            catch { /* ignore startup update errors */ }
+        });
     }
 
     public void ShowMainWindow() => _main?.RestoreFromTray();
