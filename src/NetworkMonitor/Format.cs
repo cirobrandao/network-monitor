@@ -21,6 +21,18 @@ internal static class Format
         return string.Format(CultureInfo.InvariantCulture, "{0:0} B/s", value);
     }
 
+    public static string Bytes(double bytes)
+    {
+        var value = Math.Max(0, bytes);
+        if (value >= 1024d * 1024d * 1024d)
+            return string.Format(CultureInfo.InvariantCulture, "{0:0.00} GB", value / (1024d * 1024d * 1024d));
+        if (value >= 1024d * 1024d)
+            return string.Format(CultureInfo.InvariantCulture, "{0:0.0} MB", value / (1024d * 1024d));
+        if (value >= 1024d)
+            return string.Format(CultureInfo.InvariantCulture, "{0:0} KB", value / 1024d);
+        return string.Format(CultureInfo.InvariantCulture, "{0:0} B", value);
+    }
+
     public static string Ago(TimeSpan age)
     {
         if (age.TotalSeconds < 5) return "agora";

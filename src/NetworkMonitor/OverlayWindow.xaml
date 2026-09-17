@@ -9,24 +9,17 @@
         ShowInTaskbar="False"
         Topmost="True"
         ResizeMode="NoResize"
-        Width="380"
-        Height="108"
+        Width="240"
+        Height="300"
         FontFamily="{StaticResource UiFont}">
   <Window.DataContext>
     <Binding Source="{x:Static local:AppState.Current}" />
   </Window.DataContext>
   <Window.ContextMenu>
-    <ContextMenu>
+    <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
       <MenuItem Header="Abrir monitor" Click="OpenMain_Click" />
-      <MenuItem Header="Mostrar gráfico" IsCheckable="True" IsChecked="{Binding OverlayShowChart}" />
-      <MenuItem Header="Tipo do gráfico">
-        <MenuItem Header="Linha" IsCheckable="True" IsChecked="{Binding OverlayChartLine}" />
-        <MenuItem Header="Área" IsCheckable="True" IsChecked="{Binding OverlayChartArea}" />
-        <MenuItem Header="Barras" IsCheckable="True" IsChecked="{Binding OverlayChartBar}" />
-      </MenuItem>
-      <MenuItem Header="Mostrar conexões" IsCheckable="True" IsChecked="{Binding OverlayShowConnections}" />
-      <MenuItem Header="Mostrar IP público" IsCheckable="True" IsChecked="{Binding OverlayShowPublicIp}" />
-      <MenuItem Header="Modo compacto" IsCheckable="True" IsChecked="{Binding OverlayCompact}" />
+      <MenuItem Header="Widget completo" IsCheckable="True" IsChecked="{Binding OverlayComplete}" />
+      <MenuItem Header="Widget simples" IsCheckable="True" IsChecked="{Binding OverlayCompact}" />
       <MenuItem Header="Clique atravessa" IsCheckable="True" IsChecked="{Binding OverlayClickThrough}" />
       <Separator />
       <MenuItem Header="Ocultar widget" Click="HideOverlay_Click" />
@@ -36,63 +29,125 @@
 
   <Border x:Name="Card"
           BorderThickness="1"
+          CornerRadius="8"
           MouseLeftButtonDown="Card_MouseLeftButtonDown"
           MouseLeftButtonUp="Card_MouseLeftButtonUp">
     <Border.Style>
       <Style TargetType="Border">
         <Setter Property="BorderBrush" Value="#D5DCE3" />
-        <Setter Property="Background" Value="#F8FFFFFF" />
+        <Setter Property="Background" Value="{Binding OverlayBackgroundBrush}" />
         <Style.Triggers>
           <DataTrigger Binding="{Binding IsPeaking}" Value="True">
             <Setter Property="BorderBrush" Value="#B42318" />
-            <Setter Property="Background" Value="#FFF8F4" />
           </DataTrigger>
         </Style.Triggers>
       </Style>
     </Border.Style>
-    <Grid Margin="10,8">
-      <Grid.RowDefinitions>
-        <RowDefinition Height="Auto" />
-        <RowDefinition Height="Auto" />
-        <RowDefinition Height="Auto" />
-      </Grid.RowDefinitions>
-      <Grid>
+
+    <Grid>
+      <Grid x:Name="CompleteLayout" Margin="12,10,12,10"
+            Visibility="{Binding OverlayComplete, Converter={StaticResource BoolToVis}}">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Text="Network Monitor" FontSize="13" FontWeight="SemiBold" Foreground="#12344D" />
+        <TextBlock Grid.Row="1" x:Name="AdapterLabel" Text="{Binding AdapterName}" Foreground="#5C6773"
+                   FontSize="11" TextTrimming="CharacterEllipsis" Margin="0,2,0,8" />
+        <Grid Grid.Row="2" Margin="0,0,0,3">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <TextBlock Text="Int IP" Foreground="#8A94A0" FontSize="11" Margin="0,0,8,0" />
+          <TextBlock Grid.Column="1" x:Name="InternalIpLabel" HorizontalAlignment="Right" Text="{Binding InternalIp}"
+                     Foreground="#12344D" FontSize="11" FontFamily="{StaticResource MonoFont}"
+                     TextTrimming="CharacterEllipsis" />
+        </Grid>
+        <Grid Grid.Row="3" Margin="0,0,0,3">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <TextBlock Text="Ext IP" Foreground="#8A94A0" FontSize="11" Margin="0,0,8,0" />
+          <TextBlock Grid.Column="1" x:Name="PublicIpLabel" HorizontalAlignment="Right" Text="{Binding PublicIp}"
+                     Foreground="#12344D" FontSize="11" FontFamily="{StaticResource MonoFont}"
+                     TextTrimming="CharacterEllipsis" />
+        </Grid>
+        <Grid Grid.Row="4" Margin="0,0,0,8">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <TextBlock Text="Conexões" Foreground="#8A94A0" FontSize="11" Margin="0,0,8,0" />
+          <TextBlock Grid.Column="1" x:Name="ConnectionLabel" HorizontalAlignment="Right" Text="{Binding ConnectionCount}"
+                     Foreground="#12344D" FontSize="11" FontFamily="{StaticResource MonoFont}" />
+        </Grid>
+        <Border Grid.Row="5" Background="#F4F6F8" CornerRadius="4" Margin="0,0,0,8" MinHeight="72">
+          <local:BandwidthChart x:Name="TrafficChart" Compact="True" UseOverlayChart="True"
+                                IsHitTestVisible="False" />
+        </Border>
+        <Grid Grid.Row="6" Margin="0,0,0,4">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <StackPanel>
+            <TextBlock Text="Download" FontSize="10" Foreground="#8A94A0" />
+            <TextBlock Text="{Binding DownText}" FontSize="13" FontWeight="SemiBold" Foreground="#0D7A5F"
+                       FontFamily="{StaticResource MonoFont}" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+            <TextBlock Text="Upload" FontSize="10" Foreground="#8A94A0" HorizontalAlignment="Right" />
+            <TextBlock Text="{Binding UpText}" FontSize="13" FontWeight="SemiBold" Foreground="#1A5FA8"
+                       FontFamily="{StaticResource MonoFont}" HorizontalAlignment="Right" />
+          </StackPanel>
+        </Grid>
+        <Grid Grid.Row="7">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <StackPanel>
+            <TextBlock Text="Total ↓" FontSize="10" Foreground="#8A94A0" />
+            <TextBlock Text="{Binding DownTotalText}" FontSize="12" Foreground="#0D7A5F"
+                       FontFamily="{StaticResource MonoFont}" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" HorizontalAlignment="Right">
+            <TextBlock Text="Total ↑" FontSize="10" Foreground="#8A94A0" HorizontalAlignment="Right" />
+            <TextBlock Text="{Binding UpTotalText}" FontSize="12" Foreground="#1A5FA8"
+                       FontFamily="{StaticResource MonoFont}" HorizontalAlignment="Right" />
+          </StackPanel>
+        </Grid>
+      </Grid>
+
+      <Grid x:Name="SimpleLayout" Margin="10,6,10,6"
+            Visibility="{Binding OverlayCompact, Converter={StaticResource BoolToVis}}">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="108" />
         </Grid.ColumnDefinitions>
-        <StackPanel Orientation="Horizontal">
-          <Polygon Points="0,0 7,0 3.5,6" Fill="#0D7A5F" VerticalAlignment="Center" Margin="0,0,6,0" />
-          <TextBlock Text="{Binding DownText}" FontSize="14" FontWeight="SemiBold"
-                     FontFamily="{StaticResource MonoFont}" Foreground="#0D7A5F"
-                     TextWrapping="NoWrap" />
+        <StackPanel x:Name="Rates" VerticalAlignment="Center">
+          <StackPanel Orientation="Horizontal">
+            <Polygon Points="0,0 7,0 3.5,6" Fill="#0D7A5F" VerticalAlignment="Center" Margin="0,0,6,0" />
+            <TextBlock Text="{Binding DownText}" FontSize="12" FontWeight="SemiBold"
+                       FontFamily="{StaticResource MonoFont}" Foreground="#0D7A5F" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+            <Polygon Points="3.5,0 7,6 0,6" Fill="#1A5FA8" VerticalAlignment="Center" Margin="0,0,6,0" />
+            <TextBlock Text="{Binding UpText}" FontSize="12" FontWeight="SemiBold"
+                       FontFamily="{StaticResource MonoFont}" Foreground="#1A5FA8" />
+          </StackPanel>
         </StackPanel>
-        <StackPanel Grid.Column="1" Orientation="Horizontal">
-          <Polygon Points="3.5,0 7,6 0,6" Fill="#1A5FA8" VerticalAlignment="Center" Margin="0,0,6,0" />
-          <TextBlock Text="{Binding UpText}" FontSize="14" FontWeight="SemiBold"
-                     FontFamily="{StaticResource MonoFont}" Foreground="#1A5FA8"
-                     TextWrapping="NoWrap" />
-        </StackPanel>
-        <TextBlock Grid.Column="2" Text="{Binding ConnectionCountText}"
-                   VerticalAlignment="Center" Margin="10,0,0,0"
-                   Foreground="#5C6773" FontSize="12" TextWrapping="NoWrap"
-                   Visibility="{Binding OverlayShowConnections, Converter={StaticResource BoolToVis}}" />
+        <local:BandwidthChart x:Name="SimpleChart" Grid.Column="1" Compact="True" UseOverlayChart="True"
+                              IsHitTestVisible="False" />
       </Grid>
-      <local:BandwidthChart Grid.Row="1" Height="44" Margin="0,6,0,0"
-                            Compact="True" UseOverlayChart="True"
-                            Visibility="{Binding OverlayChartVisible, Converter={StaticResource BoolToVis}}"
-                            IsHitTestVisible="False" />
-      <DockPanel Grid.Row="2" Margin="0,4,0,0"
-                 Visibility="{Binding OverlayDetailsVisible, Converter={StaticResource BoolToVis}}">
-        <TextBlock Text="{Binding PeakText}" Foreground="#B42318" FontSize="11" FontWeight="SemiBold"
-                   Visibility="{Binding IsPeaking, Converter={StaticResource BoolToVis}}"
-                   Margin="0,0,10,0" TextWrapping="NoWrap" />
-        <TextBlock HorizontalAlignment="Right"
-                   Visibility="{Binding OverlayShowPublicIp, Converter={StaticResource BoolToVis}}"
-                   Foreground="#5C6773" FontSize="11" FontFamily="{StaticResource MonoFont}"
-                   Text="{Binding PublicIp}" TextWrapping="NoWrap" />
-      </DockPanel>
     </Grid>
   </Border>
 </Window>

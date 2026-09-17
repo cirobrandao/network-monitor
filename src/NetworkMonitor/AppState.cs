@@ -38,6 +38,10 @@ public sealed class AppState : ObservableObject
     private int _processCount;
     private int _addressCount;
     private string _publicIp = "—";
+    private string _adapterName = "—";
+    private string _internalIp = "—";
+    private string _downTotalText = "0 B";
+    private string _upTotalText = "0 B";
     private bool _isPeaking;
     private string _peakText = "";
     private IReadOnlyList<double> _downHistory = [];
@@ -73,7 +77,19 @@ public sealed class AppState : ObservableObject
     public int AddressCount { get => _addressCount; private set => Set(ref _addressCount, value); }
     public string ConnectionCountText => $"{ConnectionCount} conexões";
     public string PublicIp { get => _publicIp; private set => Set(ref _publicIp, value); }
-    public bool IsPeaking { get => _isPeaking; private set => Set(ref _isPeaking, value); }
+    public string AdapterName { get => _adapterName; private set => Set(ref _adapterName, value); }
+    public string InternalIp { get => _internalIp; private set => Set(ref _internalIp, value); }
+    public string DownTotalText { get => _downTotalText; private set => Set(ref _downTotalText, value); }
+    public string UpTotalText { get => _upTotalText; private set => Set(ref _upTotalText, value); }
+    public bool IsPeaking
+    {
+        get => _isPeaking;
+        private set
+        {
+            if (!Set(ref _isPeaking, value)) return;
+            Raise(nameof(OverlayBackgroundBrush));
+        }
+    }
     public string PeakText { get => _peakText; private set => Set(ref _peakText, value); }
     public IReadOnlyList<double> DownHistory { get => _downHistory; private set => Set(ref _downHistory, value); }
     public IReadOnlyList<double> UpHistory { get => _upHistory; private set => Set(ref _upHistory, value); }
@@ -92,8 +108,24 @@ public sealed class AppState : ObservableObject
     public bool DnsIdle => !DnsBusy;
     public bool IsElevated { get; } = FirewallService.IsElevated;
     public string ElevationText => IsElevated ? "Executando como administrador" : "Sem administrador — bloqueios precisam de elevação";
-    public bool OverlayDetailsVisible => !Settings.OverlayCompact && (Settings.OverlayShowPublicIp || IsPeaking);
-    public bool OverlayChartVisible => Settings.OverlayShowChart && !Settings.OverlayCompact;
+    public bool OverlayComplete
+    {
+        get => !OverlayCompact;
+        set => OverlayCompact = !value;
+    }
+    public double OverlayWidthFixed => OverlayCompact ? 280 : 240;
+    public double OverlayHeightFixed => OverlayCompact ? 48 : 300;
+    public Brush OverlayBackgroundBrush
+    {
+        get
+        {
+            var baseColor = IsPeaking ? Color.FromRgb(0xFF, 0xF8, 0xF4) : Color.FromRgb(0xFF, 0xFF, 0xFF);
+            var alpha = (byte)Math.Round(Math.Clamp(Settings.OverlayBackgroundOpacity, 0, 1) * 255);
+            var brush = new SolidColorBrush(Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B));
+            brush.Freeze();
+            return brush;
+        }
+    }
 
     public string DnsHosts
     {
@@ -157,9 +189,24 @@ public sealed class AppState : ObservableObject
             if (Settings.OverlayCompact == value) return;
             Settings.OverlayCompact = value;
             Raise();
-            Raise(nameof(OverlayDetailsVisible));
-            Raise(nameof(OverlayChartVisible));
+            Raise(nameof(OverlayComplete));
+            Raise(nameof(OverlayWidthFixed));
+            Raise(nameof(OverlayHeightFixed));
             OverlayStyleChanged?.Invoke();
+            Persist();
+        }
+    }
+
+    public double OverlayBackgroundOpacity
+    {
+        get => Settings.OverlayBackgroundOpacity;
+        set
+        {
+            var clamped = Math.Clamp(value, 0, 1);
+            if (Math.Abs(Settings.OverlayBackgroundOpacity - clamped) < 0.001) return;
+            Settings.OverlayBackgroundOpacity = clamped;
+            Raise();
+            Raise(nameof(OverlayBackgroundBrush));
             Persist();
         }
     }
@@ -169,7 +216,7 @@ public sealed class AppState : ObservableObject
         get => Settings.OverlayOpacity;
         set
         {
-            var clamped = Math.Clamp(value, 0.45, 1);
+            var clamped = Math.Clamp(value, 0.3, 1);
             if (Math.Abs(Settings.OverlayOpacity - clamped) < 0.001) return;
             Settings.OverlayOpacity = clamped;
             Raise();
@@ -279,47 +326,6 @@ public sealed class AppState : ObservableObject
         }
     }
 
-    public bool OverlayShowConnections
-    {
-        get => Settings.OverlayShowConnections;
-        set
-        {
-            if (Settings.OverlayShowConnections == value) return;
-            Settings.OverlayShowConnections = value;
-            Raise();
-            OverlayStyleChanged?.Invoke();
-            Persist();
-        }
-    }
-
-    public bool OverlayShowPublicIp
-    {
-        get => Settings.OverlayShowPublicIp;
-        set
-        {
-            if (Settings.OverlayShowPublicIp == value) return;
-            Settings.OverlayShowPublicIp = value;
-            Raise();
-            Raise(nameof(OverlayDetailsVisible));
-            OverlayStyleChanged?.Invoke();
-            Persist();
-        }
-    }
-
-    public bool OverlayShowChart
-    {
-        get => Settings.OverlayShowChart;
-        set
-        {
-            if (Settings.OverlayShowChart == value) return;
-            Settings.OverlayShowChart = value;
-            Raise();
-            Raise(nameof(OverlayChartVisible));
-            OverlayStyleChanged?.Invoke();
-            Persist();
-        }
-    }
-
     public ChartKind OverlayChartType
     {
         get => Enum.TryParse<ChartKind>(Settings.OverlayChartType, true, out var kind) ? kind : ChartKind.Area;
@@ -331,7 +337,6 @@ public sealed class AppState : ObservableObject
             Raise(nameof(OverlayChartLine));
             Raise(nameof(OverlayChartArea));
             Raise(nameof(OverlayChartBar));
-            OverlayStyleChanged?.Invoke();
             Persist();
         }
     }
@@ -532,10 +537,7 @@ public sealed class AppState : ObservableObject
         Raise(nameof(HidePrivate));
         Raise(nameof(ResolveDns));
         Raise(nameof(ShowPublicIp));
-        Raise(nameof(OverlayShowConnections));
-        Raise(nameof(OverlayShowPublicIp));
-        Raise(nameof(OverlayShowChart));
-        Raise(nameof(OverlayChartVisible));
+        Raise(nameof(OverlayComplete));
         Raise(nameof(OverlayChartType));
         Raise(nameof(OverlayChartLine));
         Raise(nameof(OverlayChartArea));
@@ -545,7 +547,6 @@ public sealed class AppState : ObservableObject
         Raise(nameof(ChartLine));
         Raise(nameof(ChartArea));
         Raise(nameof(ChartBar));
-        Raise(nameof(OverlayDetailsVisible));
         Raise(nameof(IsElevated));
         Raise(nameof(ElevationText));
         RefreshBlockRules();
@@ -573,6 +574,10 @@ public sealed class AppState : ObservableObject
         UpBps = bandwidth.UpBps;
         DownText = Format.Rate(DownBps);
         UpText = Format.Rate(UpBps);
+        DownTotalText = Format.Bytes(bandwidth.DownBytes);
+        UpTotalText = Format.Bytes(bandwidth.UpBytes);
+        AdapterName = string.IsNullOrWhiteSpace(bandwidth.AdapterName) ? "—" : bandwidth.AdapterName;
+        InternalIp = string.IsNullOrWhiteSpace(bandwidth.InternalIp) ? "—" : bandwidth.InternalIp;
         PushHistory(DownBps, UpBps);
         UpdatePeaks();
         SyncAdapters(bandwidth.Adapters);
@@ -813,10 +818,7 @@ public sealed class AppState : ObservableObject
         var wasPeakingUi = IsPeaking;
         IsPeaking = peaking;
         if (wasPeakingUi != peaking)
-        {
-            Raise(nameof(OverlayDetailsVisible));
             OverlayStyleChanged?.Invoke();
-        }
         PeakText = peaking
             ? peakDown && peakUp
                 ? $"Pico de consumo  ↓ {DownText}  ↑ {UpText}"

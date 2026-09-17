@@ -1,10 +1,12 @@
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 
 namespace NetworkMonitor.Services;
 
 internal sealed class BandwidthMonitor
 {
     private readonly Dictionary<string, Sample> _last = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Sample> _sessionStart = new(StringComparer.Ordinal);
 
     public BandwidthSnapshot Capture(IReadOnlyCollection<string> disabledIds)
     {
@@ -12,6 +14,11 @@ internal sealed class BandwidthMonitor
         var adapters = new List<AdapterRate>();
         double down = 0;
         double up = 0;
+        long downBytes = 0;
+        long upBytes = 0;
+        string adapterName = "—";
+        string internalIp = "—";
+        var bestTraffic = -1d;
 
         NetworkInterface[] nics;
         try
@@ -67,15 +74,75 @@ internal sealed class BandwidthMonitor
                 IsUp = isUp
             });
 
-            if (enabled && isUp)
+            if (!enabled || !isUp)
+                continue;
+
+            down += dbps;
+            up += ubps;
+            var traffic = dbps + ubps;
+            if (traffic >= bestTraffic)
             {
-                down += dbps;
-                up += ubps;
+                bestTraffic = traffic;
+                adapterName = nic.Name;
+                internalIp = FirstPrivateIpv4(nic) ?? FirstIpv4(nic) ?? "—";
+            }
+
+            if (_sessionStart.TryGetValue(nic.Id, out var start) && rx >= start.Rx && tx >= start.Tx)
+            {
+                downBytes += rx - start.Rx;
+                upBytes += tx - start.Tx;
+            }
+            else
+            {
+                _sessionStart[nic.Id] = new Sample(rx, tx, now);
             }
         }
 
         adapters.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.CurrentCultureIgnoreCase));
-        return new BandwidthSnapshot { DownBps = down, UpBps = up, Adapters = adapters };
+        return new BandwidthSnapshot
+        {
+            DownBps = down,
+            UpBps = up,
+            DownBytes = downBytes,
+            UpBytes = upBytes,
+            Adapters = adapters,
+            AdapterName = adapterName,
+            InternalIp = internalIp
+        };
+    }
+
+    private static string? FirstPrivateIpv4(NetworkInterface nic)
+    {
+        foreach (var text in UnicastIpv4(nic))
+        {
+            if (Format.Classify(text) == AddressScope.Private)
+                return text;
+        }
+
+        return null;
+    }
+
+    private static string? FirstIpv4(NetworkInterface nic)
+        => UnicastIpv4(nic).FirstOrDefault();
+
+    private static IEnumerable<string> UnicastIpv4(NetworkInterface nic)
+    {
+        UnicastIPAddressInformationCollection addresses;
+        try
+        {
+            addresses = nic.GetIPProperties().UnicastAddresses;
+        }
+        catch
+        {
+            yield break;
+        }
+
+        foreach (var address in addresses)
+        {
+            if (address.Address.AddressFamily != AddressFamily.InterNetwork)
+                continue;
+            yield return address.Address.ToString();
+        }
     }
 
     private readonly record struct Sample(long Rx, long Tx, DateTime At);

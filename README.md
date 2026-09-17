@@ -19,7 +19,7 @@ App nativo para Windows 11 que mostra **quem está conectado aonde** e um **over
 
 ## Como usar
 
-1. Rode `dist\NetworkMonitor.exe` (ou compile com o script abaixo).
+1. Rode `dist\NetworkMonitor.exe` (ou compile com o script abaixo). A publicação padrão é em pasta, não um EXE único, para o Windows SmartScreen não bloquear o arquivo.
 2. Arraste o overlay para o canto da tela. Clique nele para abrir a janela principal.
 3. Botão direito no overlay ou na bandeja: esconder, compactar, sair.
 
@@ -35,4 +35,8 @@ Requer o SDK .NET 8 (Windows Desktop).
 .\scripts\build.ps1
 ```
 
-O executável portátil fica em `dist\NetworkMonitor.exe`.
+O app fica em `dist\NetworkMonitor.exe` junto com as DLLs. Para um único arquivo (mais sujeito a SmartScreen):
+
+```powershell
+.\scripts\build.ps1 -SingleFile
+```

@@ -10,6 +10,10 @@ public sealed class AppSettings
     public double OverlayLeft { get; set; } = double.NaN;
     public double OverlayTop { get; set; } = double.NaN;
     public double OverlayOpacity { get; set; } = 0.94;
+    public double OverlayBackgroundOpacity { get; set; } = 0.97;
+    public double OverlayScale { get; set; } = 1.0;
+    public double OverlayWidth { get; set; } = 440;
+    public double OverlayHeight { get; set; } = 128;
     public bool OverlayClickThrough { get; set; }
     public bool OverlayCompact { get; set; }
     public bool StartWithWindows { get; set; }
@@ -44,6 +48,7 @@ internal static class SettingsStore
     {
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        NumberHandling = JsonNumberHandling.AllowNamedFloatingPointLiterals,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 

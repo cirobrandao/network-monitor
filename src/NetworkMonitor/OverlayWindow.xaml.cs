@@ -25,14 +25,8 @@ public partial class OverlayWindow : Window
     public void ApplyStyle()
     {
         Opacity = AppState.Current.OverlayOpacity;
-        Width = AppState.Current.OverlayShowConnections ? 380 : 300;
-        var compact = AppState.Current.OverlayCompact;
-        var height = 40.0;
-        if (AppState.Current.OverlayChartVisible)
-            height += 52;
-        if (!compact && AppState.Current.OverlayDetailsVisible)
-            height += 20;
-        Height = height;
+        Width = AppState.Current.OverlayWidthFixed;
+        Height = AppState.Current.OverlayHeightFixed;
         if (IsLoaded)
             NetworkMonitor.Native.NativeWindow.ApplyOverlayStyle(this, AppState.Current.OverlayClickThrough);
     }
@@ -81,10 +75,10 @@ public partial class OverlayWindow : Window
         var top = SystemParameters.VirtualScreenTop;
         var right = left + SystemParameters.VirtualScreenWidth;
         var bottom = top + SystemParameters.VirtualScreenHeight;
-        if (Left + Width < left + 40) Left = left;
-        if (Top + Height < top + 40) Top = top;
-        if (Left > right - 40) Left = right - Width;
-        if (Top > bottom - 40) Top = bottom - Height;
+        if (double.IsFinite(Left))
+            Left = Math.Clamp(Left, left, Math.Max(left, right - Width));
+        if (double.IsFinite(Top))
+            Top = Math.Clamp(Top, top, Math.Max(top, bottom - Height));
     }
 
     private void Card_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

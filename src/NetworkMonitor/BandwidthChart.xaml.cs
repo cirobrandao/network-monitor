@@ -51,8 +51,6 @@ public partial class BandwidthChart : UserControl
         var down = state.DownHistory;
         var up = state.UpHistory;
         var count = Math.Min(down.Count, up.Count);
-        if (count < 1)
-            return;
 
         var max = 1d;
         for (var i = 0; i < count; i++)
@@ -64,6 +62,8 @@ public partial class BandwidthChart : UserControl
             ScaleLabel.Visibility = Compact ? Visibility.Collapsed : Visibility.Visible;
             ScaleLabel.Text = Format.Rate(max);
         }
+        if (count < 1)
+            return;
 
         var padL = Compact ? 2d : 8d;
         var padR = Compact ? 2d : 8d;
@@ -72,7 +72,9 @@ public partial class BandwidthChart : UserControl
         var plotW = Math.Max(1, width - padL - padR);
         var plotH = Math.Max(1, height - padT - padB);
 
-        if (!Compact)
+        var kind = UseOverlayChart ? state.OverlayChartType : state.ChartType;
+
+        if (!Compact && kind != ChartKind.Bar)
         {
             for (var g = 1; g <= 3; g++)
             {
@@ -89,7 +91,6 @@ public partial class BandwidthChart : UserControl
             }
         }
 
-        var kind = UseOverlayChart ? state.OverlayChartType : state.ChartType;
         var stroke = Compact ? 1.3 : 1.8;
         switch (kind)
         {
@@ -127,27 +128,53 @@ public partial class BandwidthChart : UserControl
 
     private void DrawBars(IReadOnlyList<double> down, IReadOnlyList<double> up, int count, double max, double left, double top, double w, double h)
     {
-        var slot = w / count;
-        var bar = Math.Max(1, slot * 0.38);
-        for (var i = 0; i < count; i++)
+        var baseline = top + h / 2;
+        var halfHeight = Math.Max(0, h / 2 - 2);
+        var samplesPerBar = Math.Max(1, (int)Math.Ceiling(60 / Math.Max(1, w / 4)));
+        var slots = (int)Math.Ceiling(60d / samplesPerBar);
+        var slotWidth = w / slots;
+        var barWidth = Math.Max(0.5, slotWidth - 1.5);
+
+        Plot.Children.Add(new Line
         {
-            var x = left + i * slot;
-            AddBar(x, down[i], max, top, h, bar, DownStroke);
-            AddBar(x + bar + 1, up[i], max, top, h, bar, UpStroke);
+            X1 = left,
+            X2 = left + w,
+            Y1 = baseline,
+            Y2 = baseline,
+            Stroke = GridLine,
+            StrokeThickness = 1
+        });
+
+        for (var end = count; end > 0; end -= samplesPerBar)
+        {
+            var start = Math.Max(0, end - samplesPerBar);
+            var downPeak = 0d;
+            var upPeak = 0d;
+            for (var sample = start; sample < end; sample++)
+            {
+                downPeak = Math.Max(downPeak, down[sample]);
+                upPeak = Math.Max(upPeak, up[sample]);
+            }
+            var position = left + w - ((count - end) / samplesPerBar + 1) * slotWidth;
+            var downHeight = downPeak / max * halfHeight;
+            var upHeight = upPeak / max * halfHeight;
+            if (downHeight > 0)
+                AddBar(position, baseline - 2 - downHeight, barWidth, downHeight, DownStroke);
+            if (upHeight > 0)
+                AddBar(position, baseline + 2, barWidth, upHeight, UpStroke);
         }
     }
 
-    private void AddBar(double x, double value, double max, double top, double h, double width, Brush fill)
+    private void AddBar(double x, double y, double width, double height, Brush fill)
     {
-        var barH = Math.Max(1, (value / max) * h);
         var rect = new Rectangle
         {
             Width = width,
-            Height = barH,
+            Height = height,
             Fill = fill
         };
         Canvas.SetLeft(rect, x);
-        Canvas.SetTop(rect, top + h - barH);
+        Canvas.SetTop(rect, y);
         Plot.Children.Add(rect);
     }
 

@@ -1,0 +1,29 @@
+<Window x:Class="NetworkMonitor.LoadingWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Network Monitor" Width="360" Height="160"
+        WindowStyle="None" ResizeMode="NoResize" ShowInTaskbar="False"
+        WindowStartupLocation="CenterScreen" Background="White">
+  <Border BorderBrush="#D5DCE3" BorderThickness="1" Padding="24">
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="56" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Image Source="Assets/app.png" Width="40" Height="40" HorizontalAlignment="Left"
+               RenderOptions.BitmapScalingMode="HighQuality" />
+        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+          <TextBlock Text="Network Monitor" FontSize="20" FontWeight="SemiBold" />
+          <TextBlock Text="Carregando..." Margin="0,6,0,0" Foreground="#5C6773" />
+        </StackPanel>
+      </Grid>
+      <ProgressBar Grid.Row="1" Height="4" Margin="0,16,0,0" IsIndeterminate="True"
+                   Foreground="#0D7A5F" Background="#EEF1F4" BorderThickness="0" />
+    </Grid>
+  </Border>
+</Window>

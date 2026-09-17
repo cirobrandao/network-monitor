@@ -150,7 +150,11 @@ public sealed class BandwidthSnapshot
 {
     public required double DownBps { get; init; }
     public required double UpBps { get; init; }
+    public long DownBytes { get; init; }
+    public long UpBytes { get; init; }
     public required IReadOnlyList<AdapterRate> Adapters { get; init; }
+    public string AdapterName { get; init; } = "—";
+    public string InternalIp { get; init; } = "—";
 }
 
 public sealed class AdapterOption : ObservableObject

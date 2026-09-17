@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Windows;
+using System.Windows.Threading;
 using NetworkMonitor.Native;
 using NetworkMonitor.Services;
 using Application = System.Windows.Application;
@@ -17,12 +18,14 @@ public partial class App : Application
     private MainWindow? _main;
     private OverlayWindow? _overlay;
     private CancellationTokenSource? _loopCts;
+    private CancellationTokenSource? _publicIpCts;
+    private bool _ownsMutex;
     private readonly BandwidthMonitor _bandwidth = new();
     private readonly ProcessResolver _processes = new();
     private readonly DnsResolver _dns = new();
     private readonly PublicIpService _publicIp = new();
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         DispatcherUnhandledException += (_, args) =>
         {
@@ -43,6 +46,7 @@ public partial class App : Application
         }
 
         _mutex = new Mutex(true, @"Local\NetworkMonitor.SingleInstance", out var created);
+        _ownsMutex = created;
         _showSignal = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\NetworkMonitor.ShowWindow");
         if (!created)
         {
@@ -58,8 +62,13 @@ public partial class App : Application
             -1,
             false);
 
-        AppState.Current.Load();
+        var loading = new LoadingWindow();
+        loading.Show();
+        await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        var state = AppState.Current;
+        await Task.Run(state.Load);
         _main = new MainWindow();
+        MainWindow = _main;
         _overlay = new OverlayWindow();
         CreateTray();
 
@@ -71,8 +80,14 @@ public partial class App : Application
         if (!AppState.Current.StartMinimized)
             _main.Show();
 
+        await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+        loading.Close();
+
         _loopCts = new CancellationTokenSource();
-        _ = RunLoopAsync(_loopCts.Token);
+        var samplingToken = _loopCts.Token;
+        _ = Task.Run(() => RunLoopAsync(samplingToken));
+        _publicIpCts = new CancellationTokenSource();
+        _ = RunPublicIpLoopAsync(_publicIpCts.Token);
     }
 
     public void ShowMainWindow() => _main?.RestoreFromTray();
@@ -112,9 +127,11 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _loopCts?.Cancel();
+        _publicIpCts?.Cancel();
         _tray?.Dispose();
         _showSignal?.Dispose();
-        _mutex?.ReleaseMutex();
+        if (_ownsMutex)
+            _mutex?.ReleaseMutex();
         _mutex?.Dispose();
         base.OnExit(e);
     }
@@ -137,7 +154,28 @@ public partial class App : Application
     {
         _loopCts?.Cancel();
         _loopCts = new CancellationTokenSource();
-        _ = RunLoopAsync(_loopCts.Token);
+        var token = _loopCts.Token;
+        _ = Task.Run(() => RunLoopAsync(token));
+    }
+
+    private async Task RunPublicIpLoopAsync(CancellationToken token)
+    {
+        try
+        {
+            while (!token.IsCancellationRequested)
+            {
+                var settings = AppState.Current.Settings;
+                if (settings.ShowPublicIp || settings.ShowOverlay)
+                {
+                    await _publicIp.RefreshIfDueAsync(token: token);
+                    AppState.Current.SetPublicIp(_publicIp.Address);
+                }
+                await Task.Delay(1000, token);
+            }
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+        }
     }
 
     private async Task RunLoopAsync(CancellationToken token)
@@ -147,8 +185,6 @@ public partial class App : Application
             try
             {
                 var settings = AppState.Current.Settings;
-                if (settings.ShowPublicIp)
-                    await _publicIp.RefreshIfDueAsync().ConfigureAwait(false);
                 var bandwidth = _bandwidth.Capture(settings.DisabledAdapters);
                 var raw = IpHelper.GetAll(settings.ShowUdp);
                 var mapped = new List<(Native.RawConnection Row, ProcessInfo Process, AddressScope Scope, string? Host)>(raw.Count);
@@ -186,7 +222,6 @@ public partial class App : Application
                             Scope = item.Scope
                         });
                     }
-                    AppState.Current.SetPublicIp(_publicIp.Address);
                     AppState.Current.ApplySnapshot(bandwidth, connections);
                 });
             }

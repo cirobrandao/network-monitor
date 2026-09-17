@@ -502,27 +502,29 @@
     <Grid Grid.RowSpan="6" Visibility="{Binding SettingsOpen, Converter={StaticResource BoolToVis}}">
       <Border Background="#66000000" MouseDown="CloseSettingsScrim_MouseDown" />
       <Border HorizontalAlignment="Right" Width="380" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,0,0" Padding="20">
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <DockPanel>
+          <DockPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+            <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Width="32" Height="32" Padding="0"
+                    ToolTip="Fechar ajustes" AutomationProperties.Name="Fechar ajustes" Click="CloseSettings_Click">
+              <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE711;" FontSize="12" />
+            </Button>
+            <TextBlock Text="Ajustes" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
+          </DockPanel>
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
           <StackPanel>
-            <TextBlock Text="Ajustes" FontSize="18" FontWeight="SemiBold" Margin="0,0,0,16" />
 
             <TextBlock Text="Widget" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,8" />
             <CheckBox Content="Mostrar widget" IsChecked="{Binding ShowOverlay}" />
-            <CheckBox Content="Mostrar conexões no widget" IsChecked="{Binding OverlayShowConnections}" />
-            <CheckBox Content="Mostrar IP público no widget" IsChecked="{Binding OverlayShowPublicIp}" />
-            <CheckBox Content="Mostrar gráfico no widget" IsChecked="{Binding OverlayShowChart}" />
-            <TextBlock Text="Gráfico do widget" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,2,0,6" />
+            <TextBlock Text="Modelo" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,8,0,6" />
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-              <RadioButton Style="{StaticResource Segment}" Content="Linha" IsChecked="{Binding OverlayChartLine}" />
-              <RadioButton Style="{StaticResource Segment}" Content="Área" IsChecked="{Binding OverlayChartArea}" />
-              <RadioButton Style="{StaticResource Segment}" Content="Barras" IsChecked="{Binding OverlayChartBar}" />
+              <RadioButton Style="{StaticResource Segment}" GroupName="OverlayMode" Content="Completo" IsChecked="{Binding OverlayComplete}" />
+              <RadioButton Style="{StaticResource Segment}" GroupName="OverlayMode" Content="Simples" IsChecked="{Binding OverlayCompact}" />
             </StackPanel>
             <CheckBox Content="Clique atravessa o overlay" IsChecked="{Binding OverlayClickThrough}" />
-            <CheckBox Content="Modo compacto" IsChecked="{Binding OverlayCompact}" />
             <CheckBox Content="Mostrar IP externo no programa" IsChecked="{Binding ShowPublicIp}" />
             <CheckBox Content="Mostrar gráfico no programa" IsChecked="{Binding ShowChart}" />
-            <TextBlock Text="Opacidade" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,4,0,4" />
-            <Slider Minimum="0.45" Maximum="1" Value="{Binding OverlayOpacity}" TickFrequency="0.05" IsSnapToTickEnabled="True" Margin="0,0,0,16" />
+            <TextBlock Text="Opacidade do widget" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,8,0,4" />
+            <Slider Minimum="0.3" Maximum="1" Value="{Binding OverlayOpacity}" TickFrequency="0.05" IsSnapToTickEnabled="True" Margin="0,0,0,16" />
 
             <TextBlock Text="Alertas de pico" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,8" />
             <CheckBox Content="Alertar picos de consumo" IsChecked="{Binding PeakAlertEnabled}" />
@@ -584,7 +586,8 @@
 
             <Button Style="{StaticResource GhostButton}" Content="Fechar" Margin="0,12,0,8" Click="CloseSettings_Click" />
           </StackPanel>
-        </ScrollViewer>
+          </ScrollViewer>
+        </DockPanel>
       </Border>
     </Grid>
   </Grid>
