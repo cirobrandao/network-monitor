@@ -38,8 +38,8 @@ internal static class UiChecks
             SetState(nameof(AppState.DownTotalText), "12.4 GB");
             SetState(nameof(AppState.UpTotalText), "1.8 GB");
             state.OverlayChartType = ChartKind.Bar;
-            SetState(nameof(AppState.DownHistory), Enumerable.Range(0, 60).Select(index => (index % 9 + 1) * 100d).ToArray());
-            SetState(nameof(AppState.UpHistory), Enumerable.Range(0, 60).Select(index => (index % 7 + 1) * 90d).ToArray());
+            SetState(nameof(AppState.WidgetDownHistory), Enumerable.Range(0, 32).Select(index => (index % 9 + 1) * 100d).ToArray());
+            SetState(nameof(AppState.WidgetUpHistory), Enumerable.Range(0, 32).Select(index => (index % 7 + 1) * 90d).ToArray());
 
             state.OverlayCompact = false;
             overlay.ApplyStyle();
@@ -85,8 +85,8 @@ internal static class UiChecks
                 Require(color.G > color.B ? position + rectangle.Height < baseline : position > baseline,
                     "Download/upload bars cross the baseline");
             }
-            SetState(nameof(AppState.DownHistory), new double[60]);
-            SetState(nameof(AppState.UpHistory), new double[60]);
+            SetState(nameof(AppState.WidgetDownHistory), new double[32]);
+            SetState(nameof(AppState.WidgetUpHistory), new double[32]);
             traffic.Redraw();
             Require(!plot.Children.OfType<Rectangle>().Any(), "Zero traffic produces fake bars");
 

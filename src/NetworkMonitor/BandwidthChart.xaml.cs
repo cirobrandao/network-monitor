@@ -13,8 +13,7 @@ public partial class BandwidthChart : UserControl
     private static readonly SolidColorBrush UpFill = Freeze(Color.FromArgb(0x48, 0x1A, 0x5F, 0xA8));
     private static readonly SolidColorBrush GridLine = Freeze(Color.FromRgb(0xE6, 0xEB, 0xF0));
 
-    public bool Compact { get; set; }
-    public bool UseOverlayChart { get; set; }
+    public bool ForWidget { get; set; }
 
     public BandwidthChart()
     {
@@ -28,9 +27,16 @@ public partial class BandwidthChart : UserControl
         if (DataContext is AppState state)
             state.PropertyChanged += (_, e) =>
             {
+                if (ForWidget)
+                {
+                    if (e.PropertyName is nameof(AppState.WidgetDownHistory) or nameof(AppState.WidgetUpHistory)
+                        or nameof(AppState.OverlayChartType))
+                        Redraw();
+                    return;
+                }
+
                 if (e.PropertyName is nameof(AppState.DownHistory) or nameof(AppState.UpHistory)
-                    or nameof(AppState.ChartType) or nameof(AppState.OverlayChartType)
-                    or nameof(AppState.DownText) or nameof(AppState.UpText))
+                    or nameof(AppState.ChartType))
                     Redraw();
             };
     }
@@ -48,33 +54,33 @@ public partial class BandwidthChart : UserControl
         if (width < 8 || height < 8)
             return;
 
-        var down = state.DownHistory;
-        var up = state.UpHistory;
+        var down = ForWidget ? state.WidgetDownHistory : state.DownHistory;
+        var up = ForWidget ? state.WidgetUpHistory : state.UpHistory;
+        var kind = ForWidget ? state.OverlayChartType : state.ChartType;
         var count = Math.Min(down.Count, up.Count);
+        if (count < 2)
+            return;
 
         var max = 1d;
         for (var i = 0; i < count; i++)
             max = Math.Max(max, Math.Max(down[i], up[i]));
+
         if (Legend is not null)
-            Legend.Visibility = Compact ? Visibility.Collapsed : Visibility.Visible;
+            Legend.Visibility = ForWidget ? Visibility.Collapsed : Visibility.Visible;
         if (ScaleLabel is not null)
         {
-            ScaleLabel.Visibility = Compact ? Visibility.Collapsed : Visibility.Visible;
+            ScaleLabel.Visibility = ForWidget ? Visibility.Collapsed : Visibility.Visible;
             ScaleLabel.Text = Format.Rate(max);
         }
-        if (count < 1)
-            return;
 
-        var padL = Compact ? 2d : 8d;
-        var padR = Compact ? 2d : 8d;
-        var padT = Compact ? 2d : 20d;
-        var padB = Compact ? 2d : 6d;
+        var padL = ForWidget ? 2d : 8d;
+        var padR = ForWidget ? 2d : 8d;
+        var padT = ForWidget ? 2d : 20d;
+        var padB = ForWidget ? 2d : 6d;
         var plotW = Math.Max(1, width - padL - padR);
         var plotH = Math.Max(1, height - padT - padB);
 
-        var kind = UseOverlayChart ? state.OverlayChartType : state.ChartType;
-
-        if (!Compact && kind != ChartKind.Bar)
+        if (!ForWidget && kind != ChartKind.Bar)
         {
             for (var g = 1; g <= 3; g++)
             {
@@ -91,34 +97,38 @@ public partial class BandwidthChart : UserControl
             }
         }
 
-        var stroke = Compact ? 1.3 : 1.8;
         switch (kind)
         {
             case ChartKind.Bar:
                 DrawBars(down, up, count, max, padL, padT, plotW, plotH);
                 break;
             case ChartKind.Area:
-                DrawArea(down, count, max, padL, padT, plotW, plotH, DownFill, DownStroke, stroke);
-                DrawArea(up, count, max, padL, padT, plotW, plotH, UpFill, UpStroke, stroke);
+                DrawArea(down, count, max, padL, padT, plotW, plotH, DownFill, DownStroke);
+                DrawArea(up, count, max, padL, padT, plotW, plotH, UpFill, UpStroke);
                 break;
             default:
-                DrawLine(down, count, max, padL, padT, plotW, plotH, DownStroke, stroke);
-                DrawLine(up, count, max, padL, padT, plotW, plotH, UpStroke, stroke);
+                DrawLine(down, count, max, padL, padT, plotW, plotH, DownStroke);
+                DrawLine(up, count, max, padL, padT, plotW, plotH, UpStroke);
                 break;
         }
     }
 
-    private void DrawLine(IReadOnlyList<double> data, int count, double max, double left, double top, double w, double h, Brush stroke, double thickness)
+    private void DrawLine(IReadOnlyList<double> data, int count, double max, double left, double top, double w, double h, Brush stroke)
     {
-        var polyline = new Polyline { Stroke = stroke, StrokeThickness = thickness, StrokeLineJoin = PenLineJoin.Round };
+        var polyline = new Polyline
+        {
+            Stroke = stroke,
+            StrokeThickness = ForWidget ? 1.4 : 2,
+            StrokeLineJoin = PenLineJoin.Round
+        };
         for (var i = 0; i < count; i++)
             polyline.Points.Add(PointAt(i, data[i], count, max, left, top, w, h));
         Plot.Children.Add(polyline);
     }
 
-    private void DrawArea(IReadOnlyList<double> data, int count, double max, double left, double top, double w, double h, Brush fill, Brush stroke, double thickness)
+    private void DrawArea(IReadOnlyList<double> data, int count, double max, double left, double top, double w, double h, Brush fill, Brush stroke)
     {
-        var polygon = new Polygon { Fill = fill, Stroke = stroke, StrokeThickness = thickness };
+        var polygon = new Polygon { Fill = fill, Stroke = stroke, StrokeThickness = ForWidget ? 1.2 : 1.6 };
         polygon.Points.Add(new Point(left, top + h));
         for (var i = 0; i < count; i++)
             polygon.Points.Add(PointAt(i, data[i], count, max, left, top, w, h));
@@ -129,12 +139,10 @@ public partial class BandwidthChart : UserControl
     private void DrawBars(IReadOnlyList<double> down, IReadOnlyList<double> up, int count, double max, double left, double top, double w, double h)
     {
         var baseline = top + h / 2;
-        var halfHeight = Math.Max(0, h / 2 - 2);
-        const double barWidth = 2.0;
-        const double gap = 2.2;
-        var slotWidth = barWidth + gap;
-        var slots = Math.Max(8, (int)(w / slotWidth));
-        var samplesPerBar = Math.Max(1, (int)Math.Ceiling(count / (double)slots));
+        var half = Math.Max(1, h / 2 - 2);
+        var gap = ForWidget ? 1.0 : 2.0;
+        var barW = Math.Max(ForWidget ? 2.4 : 5.0, (w - (count - 1) * gap) / count);
+        var step = barW + gap;
 
         Plot.Children.Add(new Line
         {
@@ -146,23 +154,16 @@ public partial class BandwidthChart : UserControl
             StrokeThickness = 1
         });
 
-        for (var end = count; end > 0; end -= samplesPerBar)
+        for (var i = 0; i < count; i++)
         {
-            var start = Math.Max(0, end - samplesPerBar);
-            var downPeak = 0d;
-            var upPeak = 0d;
-            for (var sample = start; sample < end; sample++)
-            {
-                downPeak = Math.Max(downPeak, down[sample]);
-                upPeak = Math.Max(upPeak, up[sample]);
-            }
-            var position = left + w - ((count - end) / samplesPerBar + 1) * slotWidth;
-            var downHeight = downPeak / max * halfHeight;
-            var upHeight = upPeak / max * halfHeight;
-            if (downHeight > 0)
-                AddBar(position, baseline - 2 - downHeight, barWidth, downHeight, DownStroke);
-            if (upHeight > 0)
-                AddBar(position, baseline + 2, barWidth, upHeight, UpStroke);
+            var x = left + i * step;
+            var width = i == count - 1 ? Math.Max(1, left + w - x) : barW;
+            var downH = down[i] / max * half;
+            var upH = up[i] / max * half;
+            if (downH > 0.4)
+                AddBar(x, baseline - 1 - downH, width, downH, DownStroke);
+            if (upH > 0.4)
+                AddBar(x, baseline + 1, width, upH, UpStroke);
         }
     }
 
@@ -170,7 +171,7 @@ public partial class BandwidthChart : UserControl
     {
         var rect = new Rectangle
         {
-            Width = width,
+            Width = Math.Max(1, width),
             Height = height,
             Fill = fill
         };
@@ -181,7 +182,7 @@ public partial class BandwidthChart : UserControl
 
     private static Point PointAt(int i, double value, int count, double max, double left, double top, double w, double h)
     {
-        var x = count == 1 ? left : left + i * (w / (count - 1));
+        var x = count <= 1 ? left : left + i * (w / (count - 1));
         var y = top + h - (value / max) * h;
         return new Point(x, y);
     }

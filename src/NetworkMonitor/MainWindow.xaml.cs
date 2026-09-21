@@ -85,11 +85,8 @@ public partial class MainWindow : Window
     private async void RunDns_Click(object sender, RoutedEventArgs e)
         => await AppState.Current.RunDnsTestAsync();
 
-    private void HideChart_Click(object sender, RoutedEventArgs e)
-        => AppState.Current.ShowChart = false;
-
-    private void ShowChart_Click(object sender, RoutedEventArgs e)
-        => AppState.Current.ShowChart = true;
+    private void ToggleChart_Click(object sender, RoutedEventArgs e)
+        => AppState.Current.ShowChart = !AppState.Current.ShowChart;
 
     private void ToggleOverlay_Click(object sender, RoutedEventArgs e)
         => AppState.Current.ShowOverlay = !AppState.Current.ShowOverlay;

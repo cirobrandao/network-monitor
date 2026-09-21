@@ -60,6 +60,16 @@ O app consulta `https://github.com/cirobrandao/network-monitor/releases/latest` 
 Isso compila, gera o zip, cria a tag `v1.1.0` e a release com o asset.
 
 
+## Instalador para amigos
+
+Gera um `NetworkMonitor-Setup-1.2.1.exe` (instalacao por usuario, **sem administrador**): atalho no menu Iniciar, desinstalacao nas Configuracoes do Windows, opcao de area de trabalho e de iniciar com o Windows.
+
+```powershell
+.\scripts\pack-installer.ps1
+```
+
+O EXE fica em `artifacts\NetworkMonitor-Setup-1.2.1.exe`. E so enviar esse arquivo.
+
 ## Instalacao por usuario (sem admin)
 
 ```powershell
@@ -67,6 +77,11 @@ Isso compila, gera o zip, cria a tag `v1.1.0` e a release com o asset.
 .\scripts\install-user.ps1
 .\scripts\uninstall-user.ps1
 ```
+
+## Novidades 1.2.1
+
+- Gráficos refeitos do zero, com histórico separado para o app e o widget
+- Instalador por usuário (`NetworkMonitor-Setup`)
 
 ## Novidades 1.2
 

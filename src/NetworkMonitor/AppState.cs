@@ -14,9 +14,8 @@ public sealed class AppState : ObservableObject
     private readonly HashSet<string> _expandedAddresses = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, TrackedLive> _live = new(StringComparer.Ordinal);
     private readonly List<ClosedRecord> _closed = [];
-    private readonly double[] _downHist = new double[60];
-    private readonly double[] _upHist = new double[60];
-    private int _histCount;
+    private readonly RateHistory _appChart = new(60);
+    private readonly RateHistory _widgetChart = new(32);
     private bool _persistReady;
     private bool _wasPeaking;
     private readonly Dictionary<string, GeoInfo> _geo = new(StringComparer.OrdinalIgnoreCase);
@@ -56,6 +55,8 @@ public sealed class AppState : ObservableObject
     private string _peakText = "";
     private IReadOnlyList<double> _downHistory = [];
     private IReadOnlyList<double> _upHistory = [];
+    private IReadOnlyList<double> _widgetDownHistory = [];
+    private IReadOnlyList<double> _widgetUpHistory = [];
     private IReadOnlyList<DnsServerRow> _dnsResults = [];
     private IReadOnlyList<BlockRule> _blockRules = [];
     private string _dnsHosts = "google.com, cloudflare.com, microsoft.com, cirobrandao.com.br";
@@ -156,6 +157,8 @@ public sealed class AppState : ObservableObject
         : new SolidColorBrush(Color.FromRgb(0x9A, 0xA7, 0xB5));
 
     public IReadOnlyList<double> DownHistory { get => _downHistory; private set => Set(ref _downHistory, value); }
+    public IReadOnlyList<double> WidgetDownHistory { get => _widgetDownHistory; private set => Set(ref _widgetDownHistory, value); }
+    public IReadOnlyList<double> WidgetUpHistory { get => _widgetUpHistory; private set => Set(ref _widgetUpHistory, value); }
     public IReadOnlyList<double> UpHistory { get => _upHistory; private set => Set(ref _upHistory, value); }
     public IReadOnlyList<DnsServerRow> DnsResults { get => _dnsResults; private set => Set(ref _dnsResults, value); }
     public IReadOnlyList<BlockRule> BlockRules { get => _blockRules; private set => Set(ref _blockRules, value); }
@@ -449,9 +452,14 @@ public sealed class AppState : ObservableObject
             if (Settings.ShowChart == value) return;
             Settings.ShowChart = value;
             Raise();
+            Raise(nameof(ChartEyeGlyph));
+            Raise(nameof(ChartEyeTip));
             Persist();
         }
     }
+
+    public string ChartEyeGlyph => "\uE890";
+    public string ChartEyeTip => ShowChart ? "Ocultar gráfico" : "Mostrar gráfico";
 
     public ChartKind ChartType
     {
@@ -628,6 +636,8 @@ public sealed class AppState : ObservableObject
         Raise(nameof(OverlayChartArea));
         Raise(nameof(OverlayChartBar));
         Raise(nameof(ShowChart));
+        Raise(nameof(ChartEyeGlyph));
+        Raise(nameof(ChartEyeTip));
         Raise(nameof(ChartType));
         Raise(nameof(ChartLine));
         Raise(nameof(ChartArea));
@@ -1263,44 +1273,14 @@ public sealed class AppState : ObservableObject
 
     private void PushHistory(double down, double up)
     {
-        Shift(_downHist, down);
-        Shift(_upHist, up);
-        if (_histCount < _downHist.Length)
-            _histCount++;
-        DownSpark = ToPoints(_downHist, _histCount);
-        UpSpark = ToPoints(_upHist, _histCount);
-        var start = _downHist.Length - Math.Max(_histCount, 1);
-        DownHistory = _downHist.Skip(start).ToArray();
-        UpHistory = _upHist.Skip(start).ToArray();
-    }
-
-    private static void Shift(double[] values, double incoming)
-    {
-        Array.Copy(values, 1, values, 0, values.Length - 1);
-        values[^1] = incoming;
-    }
-
-    private static PointCollection ToPoints(double[] data, int count)
-    {
-        const double width = 132;
-        const double height = 28;
-        var start = data.Length - Math.Max(count, 1);
-        var max = 1d;
-        for (var i = start; i < data.Length; i++)
-            max = Math.Max(max, data[i]);
-
-        var points = new PointCollection(count);
-        var visible = Math.Max(count, 1);
-        for (var i = 0; i < visible; i++)
-        {
-            var value = data[start + i];
-            var x = visible == 1 ? 0 : i * (width / (visible - 1));
-            var y = height - (value / max) * (height - 4) - 2;
-            points.Add(new Point(x, y));
-        }
-        if (points.CanFreeze)
-            points.Freeze();
-        return points;
+        _appChart.Push(down, up);
+        _widgetChart.Push(down, up);
+        DownHistory = _appChart.CopyDown();
+        UpHistory = _appChart.CopyUp();
+        WidgetDownHistory = _widgetChart.CopyDown();
+        WidgetUpHistory = _widgetChart.CopyUp();
+        DownSpark = new PointCollection();
+        UpSpark = new PointCollection();
     }
 
     private void Persist()

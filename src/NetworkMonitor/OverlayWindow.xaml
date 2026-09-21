@@ -22,6 +22,11 @@
       <MenuItem Header="Widget simples" IsCheckable="True" IsChecked="{Binding OverlayCompact}" />
       <MenuItem Header="Clique atravessa" IsCheckable="True" IsChecked="{Binding OverlayClickThrough}" />
       <Separator />
+      <MenuItem Header="Gráfico do widget" />
+      <MenuItem Header="Linha" IsCheckable="True" IsChecked="{Binding OverlayChartLine}" />
+      <MenuItem Header="Área" IsCheckable="True" IsChecked="{Binding OverlayChartArea}" />
+      <MenuItem Header="Barras" IsCheckable="True" IsChecked="{Binding OverlayChartBar}" />
+      <Separator />
       <MenuItem Header="Ocultar widget" Click="HideOverlay_Click" />
       <MenuItem Header="Sair" Click="Exit_Click" />
     </ContextMenu>
@@ -89,8 +94,9 @@
           <TextBlock Grid.Column="1" x:Name="ConnectionLabel" HorizontalAlignment="Right" Text="{Binding ConnectionCount}"
                      Foreground="{Binding OverlayForegroundBrush}" FontSize="11" FontFamily="{StaticResource MonoFont}" />
         </Grid>
-        <Border Grid.Row="5" Background="{DynamicResource Surface2Brush}" CornerRadius="4" Margin="0,0,0,8" MinHeight="72">
-          <local:BandwidthChart x:Name="TrafficChart" Compact="True" UseOverlayChart="True"
+        <Border Grid.Row="5" Background="{DynamicResource Surface2Brush}" CornerRadius="4" Margin="0,0,0,8"
+                Height="72" MinHeight="72" MaxHeight="72">
+          <local:BandwidthChart x:Name="TrafficChart" ForWidget="True"
                                 IsHitTestVisible="False" />
         </Border>
         <Grid Grid.Row="6" Margin="0,0,0,4">
@@ -145,7 +151,9 @@
                        FontFamily="{StaticResource MonoFont}" Foreground="#1A5FA8" />
           </StackPanel>
         </StackPanel>
-        <local:BandwidthChart x:Name="SimpleChart" Grid.Column="1" Compact="True" UseOverlayChart="True"
+        <local:BandwidthChart x:Name="SimpleChart" Grid.Column="1" ForWidget="True"
+                              Width="104" Height="32" MaxHeight="32"
+                              HorizontalAlignment="Right" VerticalAlignment="Center"
                               IsHitTestVisible="False" />
       </Grid>
     </Grid>

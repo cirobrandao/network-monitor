@@ -48,7 +48,7 @@ internal static class GeoIpService
     private static HttpClient CreateClient()
     {
         var c = new HttpClient { Timeout = TimeSpan.FromSeconds(6) };
-        c.DefaultRequestHeaders.UserAgent.ParseAdd("NetworkMonitor/1.2");
+        c.DefaultRequestHeaders.UserAgent.ParseAdd("NetworkMonitor/1.2.1");
         return c;
     }
 

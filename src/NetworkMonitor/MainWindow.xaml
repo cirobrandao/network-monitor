@@ -113,9 +113,6 @@
           </TextBlock>
         </Grid>
         <StackPanel Grid.Column="1" Orientation="Horizontal">
-          <Button Style="{StaticResource GhostButton}" Content="Mostrar gráfico" Margin="0,0,8,0"
-                  Click="ShowChart_Click" Padding="10,6"
-                  Visibility="{Binding ShowChart, Converter={StaticResource BoolToVisInv}}" />
           <Border Background="{DynamicResource Surface2Brush}"
                   BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="2">
             <StackPanel Orientation="Horizontal">
@@ -134,8 +131,7 @@
     </Border>
 
     <Border Grid.Row="3" Margin="12,10,12,0" Background="{DynamicResource SurfaceBrush}"
-            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
-            Visibility="{Binding ShowChart, Converter={StaticResource BoolToVis}}">
+            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
       <DockPanel LastChildFill="True">
         <Grid DockPanel.Dock="Top" Margin="10,8,10,4">
           <TextBlock Text="TRÁFEGO" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
@@ -143,12 +139,15 @@
             <RadioButton Style="{StaticResource Segment}" Content="Linha" IsChecked="{Binding ChartLine}" />
             <RadioButton Style="{StaticResource Segment}" Content="Área" IsChecked="{Binding ChartArea}" />
             <RadioButton Style="{StaticResource Segment}" Content="Barras" IsChecked="{Binding ChartBar}" />
-            <Button Style="{StaticResource IconToolButton}" ToolTip="Ocultar gráfico" Click="HideChart_Click" Margin="8,0,0,0">
-              <TextBlock Style="{StaticResource Glyph}" Text="&#xE711;" FontSize="11" />
+            <Button Style="{StaticResource IconToolButton}" ToolTip="{Binding ChartEyeTip}"
+                    Click="ToggleChart_Click" Margin="8,0,0,0"
+                    AutomationProperties.Name="{Binding ChartEyeTip}">
+              <TextBlock Style="{StaticResource Glyph}" Text="{Binding ChartEyeGlyph}" FontSize="14" />
             </Button>
           </StackPanel>
         </Grid>
-        <local:BandwidthChart Height="140" DataContext="{Binding}" />
+        <local:BandwidthChart Height="140" DataContext="{Binding}"
+                              Visibility="{Binding ShowChart, Converter={StaticResource BoolToVis}}" />
       </DockPanel>
     </Border>
 
@@ -538,6 +537,12 @@
 
             <TextBlock Style="{StaticResource SettingsSection}" Text="Widget" />
             <CheckBox Content="Mostrar widget" IsChecked="{Binding ShowOverlay}" />
+            <TextBlock Text="Gráfico do widget" Style="{StaticResource SettingsHint}" Margin="0,4,0,6" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+              <RadioButton Style="{StaticResource Segment}" GroupName="OverlayChart" Content="Linha" IsChecked="{Binding OverlayChartLine}" />
+              <RadioButton Style="{StaticResource Segment}" GroupName="OverlayChart" Content="Área" IsChecked="{Binding OverlayChartArea}" />
+              <RadioButton Style="{StaticResource Segment}" GroupName="OverlayChart" Content="Barras" IsChecked="{Binding OverlayChartBar}" />
+            </StackPanel>
             <TextBlock Text="Modelo" Style="{StaticResource SettingsHint}" Margin="0,4,0,6" />
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
               <RadioButton Style="{StaticResource Segment}" GroupName="OverlayMode" Content="Completo" IsChecked="{Binding OverlayComplete}" />
