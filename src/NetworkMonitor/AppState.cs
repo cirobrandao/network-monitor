@@ -31,6 +31,7 @@ public sealed class AppState : ObservableObject
     private string _search = "";
     private ViewMode _viewMode = ViewMode.Processes;
     private bool _settingsOpen;
+    private bool _dnsOpen;
     private double _downBps;
     private double _upBps;
     private string _downText = "0 B/s";
@@ -58,7 +59,7 @@ public sealed class AppState : ObservableObject
     private IReadOnlyList<DnsServerRow> _dnsResults = [];
     private IReadOnlyList<BlockRule> _blockRules = [];
     private string _dnsHosts = "google.com, cloudflare.com, microsoft.com, cirobrandao.com.br";
-    private string _dnsStatus = "Clique em Testar DNS para medir os servidores.";
+    private string _dnsStatus = "Clique em Testar agora para medir os servidores.";
     private bool _dnsBusy;
     private List<NetConnection> _raw = [];
 
@@ -217,8 +218,24 @@ public sealed class AppState : ObservableObject
     public bool SettingsOpen
     {
         get => _settingsOpen;
-        set => Set(ref _settingsOpen, value);
+        set
+        {
+            if (!Set(ref _settingsOpen, value)) return;
+            if (value) DnsOpen = false;
+        }
     }
+
+    public bool DnsOpen
+    {
+        get => _dnsOpen;
+        set
+        {
+            if (!Set(ref _dnsOpen, value)) return;
+            if (value) SettingsOpen = false;
+        }
+    }
+
+    public string VersionLabel { get; } = "v" + UpdateService.GetCurrentVersionLabel();
 
     public bool ShowOverlay
     {
@@ -846,10 +863,19 @@ public sealed class AppState : ObservableObject
                     SamplesText = string.Join("   ", result.Samples.Select(s => $"{s.Host} {s.Result}"))
                 });
             }
-            DnsResults = rows.OrderBy(r => r.AverageText == "—" ? 99999 : 0)
+            var ordered = rows.OrderBy(r => r.AverageText == "—" ? 99999 : 0)
                 .ThenBy(r => r.AverageText)
                 .ToList();
-            var best = DnsResults.FirstOrDefault(r => r.AverageText != "—");
+            var best = ordered.FirstOrDefault(r => r.AverageText != "—");
+            DnsResults = ordered.Select(r => new DnsServerRow
+            {
+                Name = r.Name,
+                Address = r.Address,
+                AverageText = r.AverageText,
+                Status = r.Status,
+                SamplesText = r.SamplesText,
+                IsBest = best is not null && ReferenceEquals(r, best)
+            }).ToList();
             DnsStatus = best is null
                 ? "Nenhum servidor respondeu."
                 : $"Mais rápido: {best.Name} ({best.Address}) — {best.AverageText}";

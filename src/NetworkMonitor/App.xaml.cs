@@ -228,7 +228,7 @@ public partial class App : Application
                 var settings = AppState.Current.Settings;
                 var bandwidth = _bandwidth.Capture(settings.DisabledAdapters);
                 var raw = IpHelper.GetAll(settings.ShowUdp);
-                var traffic = _processBw.Sample(raw, 8);
+                var traffic = _processBw.Sample(raw, bandwidth.DownBps, bandwidth.UpBps, 8);
                 var mapped = new List<(Native.RawConnection Row, ProcessInfo Process, AddressScope Scope, string? Host)>(raw.Count);
                 foreach (var row in raw)
                 {

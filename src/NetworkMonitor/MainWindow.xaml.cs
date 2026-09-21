@@ -11,7 +11,6 @@ namespace NetworkMonitor;
 public partial class MainWindow : Window
 {
     private bool _forceClose;
-    private DnsWindow? _dns;
 
     public MainWindow()
     {
@@ -75,16 +74,22 @@ public partial class MainWindow : Window
     }
 
     private void OpenDns_Click(object sender, RoutedEventArgs e)
-    {
-        if (_dns is { IsVisible: true })
-        {
-            _dns.Activate();
-            return;
-        }
-        _dns = new DnsWindow { Owner = this };
-        _dns.Closed += (_, _) => _dns = null;
-        _dns.Show();
-    }
+        => AppState.Current.DnsOpen = !AppState.Current.DnsOpen;
+
+    private void CloseDns_Click(object sender, RoutedEventArgs e)
+        => AppState.Current.DnsOpen = false;
+
+    private void CloseDnsScrim_MouseDown(object sender, MouseButtonEventArgs e)
+        => AppState.Current.DnsOpen = false;
+
+    private async void RunDns_Click(object sender, RoutedEventArgs e)
+        => await AppState.Current.RunDnsTestAsync();
+
+    private void HideChart_Click(object sender, RoutedEventArgs e)
+        => AppState.Current.ShowChart = false;
+
+    private void ShowChart_Click(object sender, RoutedEventArgs e)
+        => AppState.Current.ShowChart = true;
 
     private void ToggleOverlay_Click(object sender, RoutedEventArgs e)
         => AppState.Current.ShowOverlay = !AppState.Current.ShowOverlay;

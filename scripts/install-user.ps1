@@ -38,7 +38,7 @@ Set-ItemProperty -Path $reg -Name "DisplayIcon" -Value $exe
 Set-ItemProperty -Path $reg -Name "InstallLocation" -Value $target
 Set-ItemProperty -Path $reg -Name "Publisher" -Value "Ciro Brandao"
 Set-ItemProperty -Path $reg -Name "UninstallString" -Value $uninstallCmd
-Set-ItemProperty -Path $reg -Name "DisplayVersion" -Value "1.1.0"
+Set-ItemProperty -Path $reg -Name "DisplayVersion" -Value "1.2.0"
 Set-ItemProperty -Path $reg -Name "NoModify" -Value 1 -Type DWord
 Set-ItemProperty -Path $reg -Name "NoRepair" -Value 1 -Type DWord
 

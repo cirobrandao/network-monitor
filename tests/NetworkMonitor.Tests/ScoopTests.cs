@@ -50,4 +50,16 @@ public class ScoopTests
         Assert.True(Theme.ResolveLight("Light"));
         Assert.False(Theme.ResolveLight("Dark"));
     }
+
+    [Fact]
+    public void Rates_ShareAndAdd()
+    {
+        var a = new Rates(1000, 400);
+        var b = a.Share(2);
+        Assert.Equal(500, b.DownBps);
+        Assert.Equal(200, b.UpBps);
+        var c = a.Add(new Rates(100, 50));
+        Assert.Equal(1100, c.DownBps);
+        Assert.Equal(450, c.UpBps);
+    }
 }

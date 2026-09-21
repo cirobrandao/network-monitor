@@ -10,7 +10,7 @@ App nativo para Windows 11 que mostra **quem está conectado aonde** e um **over
 - Overlay compacto com download, upload, conexões ativas e IP externo (cada item pode ser ocultado)
 - Gráfico de tráfego no programa (linha, área ou barras)
 - Bandeira do país, clique para copiar o IP e velocidade por aplicativo/IP
-- Teste de DNS em janela própria; bloqueio de aplicativo/IP pelo Firewall do Windows
+- Teste de DNS no painel da janela; bloqueio de aplicativo/IP pelo Firewall do Windows
 - Histórico de conexões encerradas (5, 10 ou 30 minutos)
 - Alerta visual e na bandeja quando há pico de consumo
 - Ícone na bandeja do sistema (fechar a janela não encerra o app)
@@ -68,6 +68,12 @@ Isso compila, gera o zip, cria a tag `v1.1.0` e a release com o asset.
 .\scripts\uninstall-user.ps1
 ```
 
+## Novidades 1.2
+
+- Velocidade por aplicativo e por IP sem precisar de administrador
+- Bandeiras alinhadas ao IP, gráfico ocultável, DNS no painel
+- Tema do sistema/claro/escuro e versão no rodapé
+
 ## Novidades 1.1
 
 - UAC sob demanda no bloqueio
@@ -75,5 +81,5 @@ Isso compila, gera o zip, cria a tag `v1.1.0` e a release com o asset.
 - Bandwidth por processo e por IP (EStats)
 - Alertas por processo (settings.json AlertRules)
 - Tema: cor do sistema, claro ou escuro
-- Teste de DNS em ferramenta separada
+- Teste de DNS no painel da janela
 - Clique no IP para copiar

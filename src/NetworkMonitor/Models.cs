@@ -159,6 +159,8 @@ public sealed class DnsServerRow
     public required string AverageText { get; init; }
     public required string Status { get; init; }
     public required string SamplesText { get; init; }
+    public bool IsBest { get; init; }
+    public string BestLabel => IsBest ? "Mais rápido" : "";
 }
 
 public sealed class BlockRule

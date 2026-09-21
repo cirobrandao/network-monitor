@@ -32,13 +32,10 @@
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-          <Image Source="pack://application:,,,/Assets/app.png" Width="22" Height="22" Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality" />
-          <StackPanel Visibility="{Binding ShowPublicIp, Converter={StaticResource BoolToVis}}">
-            <TextBlock Text="IP EXTERNO" FontSize="10" Foreground="#8FD4C0" FontWeight="SemiBold" />
-            <TextBlock Text="{Binding PublicIp}" Style="{StaticResource IpText}" Tag="{Binding PublicIp}"
-                       MouseLeftButtonUp="CopyIp_MouseUp" Foreground="White" FontSize="16" FontWeight="SemiBold" />
-          </StackPanel>
+        <StackPanel VerticalAlignment="Center" Visibility="{Binding ShowPublicIp, Converter={StaticResource BoolToVis}}">
+          <TextBlock Text="IP EXTERNO" FontSize="10" Foreground="#8FD4C0" FontWeight="SemiBold" />
+          <TextBlock Text="{Binding PublicIp}" Style="{StaticResource IpText}" Tag="{Binding PublicIp}"
+                     MouseLeftButtonUp="CopyIp_MouseUp" Foreground="White" FontSize="16" FontWeight="SemiBold" />
         </StackPanel>
 
         <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="0,0,16,0">
@@ -55,10 +52,30 @@
         </StackPanel>
 
         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-          <Button Style="{StaticResource HeaderButton}" Content="Widget" Click="ToggleOverlay_Click" Margin="0,0,8,0" />
-          <Button Style="{StaticResource HeaderButton}" Content="Teste DNS" Click="OpenDns_Click" Margin="0,0,8,0" />
-          <Button Style="{StaticResource HeaderButton}" Content="Exportar" Click="Export_Click" Margin="0,0,8,0" />
-          <Button Style="{StaticResource AccentButton}" Content="Ajustes" Click="OpenSettings_Click" />
+          <Button Style="{StaticResource HeaderButton}" Click="ToggleOverlay_Click" Margin="0,0,8,0" ToolTip="Mostrar ou ocultar o widget">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE7F4;" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center" />
+              <TextBlock Text="Widget" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+          <Button Style="{StaticResource HeaderButton}" Click="Export_Click" Margin="0,0,8,0" ToolTip="Exportar conexões em CSV">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xEDE1;" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center" />
+              <TextBlock Text="Exportar" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+          <Button Style="{StaticResource HeaderButton}" Click="OpenDns_Click" Margin="0,0,8,0" ToolTip="Testar servidores DNS">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE774;" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center" />
+              <TextBlock Text="DNS" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
+          <Button Style="{StaticResource AccentButton}" Click="OpenSettings_Click">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE713;" FontSize="13" Margin="0,0,8,0" VerticalAlignment="Center" />
+              <TextBlock Text="Ajustes" VerticalAlignment="Center" />
+            </StackPanel>
+          </Button>
         </StackPanel>
       </Grid>
     </Border>
@@ -95,23 +112,28 @@
             </TextBlock.Style>
           </TextBlock>
         </Grid>
-        <Border Grid.Column="1" Margin="12,0,0,0" Background="{DynamicResource Surface2Brush}"
-                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="2">
-          <StackPanel Orientation="Horizontal">
-            <RadioButton Style="{StaticResource Segment}" Content="Aplicativos"
-                         IsChecked="{Binding ViewMode, Converter={StaticResource EnumToBool}, ConverterParameter=Processes}" />
-            <RadioButton Style="{StaticResource Segment}" Content="IPs"
-                         IsChecked="{Binding ViewMode, Converter={StaticResource EnumToBool}, ConverterParameter=Addresses}" />
-            <RadioButton Style="{StaticResource Segment}" Content="Ativas"
-                         IsChecked="{Binding ViewMode, Converter={StaticResource EnumToBool}, ConverterParameter=Connections}" />
-            <RadioButton Style="{StaticResource Segment}" Content="Encerradas"
-                         IsChecked="{Binding ViewMode, Converter={StaticResource EnumToBool}, ConverterParameter=Closed}" />
-          </StackPanel>
-        </Border>
+        <StackPanel Grid.Column="1" Orientation="Horizontal">
+          <Button Style="{StaticResource GhostButton}" Content="Mostrar gráfico" Margin="0,0,8,0"
+                  Click="ShowChart_Click" Padding="10,6"
+                  Visibility="{Binding ShowChart, Converter={StaticResource BoolToVisInv}}" />
+          <Border Background="{DynamicResource Surface2Brush}"
+                  BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="2">
+            <StackPanel Orientation="Horizontal">
+              <RadioButton Style="{StaticResource Segment}" Content="Aplicativos"
+                           IsChecked="{Binding ViewMode, Converter={StaticResource EnumToBool}, ConverterParameter=Processes}" />
+              <RadioButton Style="{StaticResource Segment}" Content="IPs"
+                           IsChecked="{Binding ViewMode, Converter={StaticResource EnumToBool}, ConverterParameter=Addresses}" />
+              <RadioButton Style="{StaticResource Segment}" Content="Ativas"
+                           IsChecked="{Binding ViewMode, Converter={StaticResource EnumToBool}, ConverterParameter=Connections}" />
+              <RadioButton Style="{StaticResource Segment}" Content="Encerradas"
+                           IsChecked="{Binding ViewMode, Converter={StaticResource EnumToBool}, ConverterParameter=Closed}" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
       </Grid>
     </Border>
 
-    <Border Grid.Row="3" Margin="12,0,12,0" Background="{DynamicResource SurfaceBrush}"
+    <Border Grid.Row="3" Margin="12,10,12,0" Background="{DynamicResource SurfaceBrush}"
             BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
             Visibility="{Binding ShowChart, Converter={StaticResource BoolToVis}}">
       <DockPanel LastChildFill="True">
@@ -121,6 +143,9 @@
             <RadioButton Style="{StaticResource Segment}" Content="Linha" IsChecked="{Binding ChartLine}" />
             <RadioButton Style="{StaticResource Segment}" Content="Área" IsChecked="{Binding ChartArea}" />
             <RadioButton Style="{StaticResource Segment}" Content="Barras" IsChecked="{Binding ChartBar}" />
+            <Button Style="{StaticResource IconToolButton}" ToolTip="Ocultar gráfico" Click="HideChart_Click" Margin="8,0,0,0">
+              <TextBlock Style="{StaticResource Glyph}" Text="&#xE711;" FontSize="11" />
+            </Button>
           </StackPanel>
         </Grid>
         <local:BandwidthChart Height="140" DataContext="{Binding}" />
@@ -173,30 +198,32 @@
                         <Grid Margin="0,4">
                           <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="48" />
-                            <ColumnDefinition Width="22" />
-                            <ColumnDefinition Width="210" />
+                            <ColumnDefinition Width="240" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="130" />
                             <ColumnDefinition Width="28" />
                             <ColumnDefinition Width="28" />
                             <ColumnDefinition Width="Auto" />
                           </Grid.ColumnDefinitions>
-                          <TextBlock Text="{Binding ProtocolText}" Foreground="{DynamicResource MutedBrush}" />
-                          <Image Grid.Column="1" Source="{Binding FlagImage}" Width="18" Height="12" Stretch="Uniform"
-                                 RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center"
-                                 ToolTip="{Binding GeoText}"
-                                 Visibility="{Binding CountryCode, Converter={StaticResource NonEmptyVis}}" />
-                          <TextBlock Grid.Column="2" Text="{Binding RemoteDisplay}" Style="{StaticResource IpText}"
-                                     Tag="{Binding RemoteAddress}" MouseLeftButtonUp="CopyIp_MouseUp" />
-                          <TextBlock Grid.Column="3" Text="{Binding HostDisplay}" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" />
-                          <TextBlock Grid.Column="4" Text="{Binding RateText}" FontFamily="{StaticResource MonoFont}" FontSize="11" />
-                          <TextBlock Grid.Column="5" Style="{StaticResource Glyph}" Text="{Binding State, Converter={StaticResource StateIcon}}"
+                          <TextBlock Text="{Binding ProtocolText}" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
+                          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Image Source="{Binding FlagImage}" Width="16" Height="11" Stretch="Uniform"
+                                   Margin="0,0,8,0" VerticalAlignment="Center"
+                                   RenderOptions.BitmapScalingMode="HighQuality"
+                                   ToolTip="{Binding GeoText}"
+                                   Visibility="{Binding CountryCode, Converter={StaticResource NonEmptyVis}}" />
+                            <TextBlock Text="{Binding RemoteDisplay}" Style="{StaticResource IpText}" VerticalAlignment="Center"
+                                       Tag="{Binding RemoteAddress}" MouseLeftButtonUp="CopyIp_MouseUp" />
+                          </StackPanel>
+                          <TextBlock Grid.Column="2" Text="{Binding HostDisplay}" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="3" Text="{Binding RateText}" FontFamily="{StaticResource MonoFont}" FontSize="11" VerticalAlignment="Center" />
+                          <TextBlock Grid.Column="4" Style="{StaticResource Glyph}" Text="{Binding State, Converter={StaticResource StateIcon}}"
                                      Foreground="{Binding State, Converter={StaticResource StateBrush}}"
                                      ToolTip="{Binding State, Converter={StaticResource State}}" />
-                          <TextBlock Grid.Column="6" Style="{StaticResource Glyph}" Text="{Binding Scope, Converter={StaticResource ScopeIcon}}"
+                          <TextBlock Grid.Column="5" Style="{StaticResource Glyph}" Text="{Binding Scope, Converter={StaticResource ScopeIcon}}"
                                      Foreground="{Binding Scope, Converter={StaticResource ScopeBrush}}"
                                      ToolTip="{Binding Scope, Converter={StaticResource Scope}}" />
-                          <Button Grid.Column="7" Style="{StaticResource IconToolButton}" ToolTip="Bloquear IP"
+                          <Button Grid.Column="6" Style="{StaticResource IconToolButton}" ToolTip="Bloquear IP"
                                   Click="BlockConnectionIp_Click" Tag="{Binding}">
                             <TextBlock Style="{StaticResource Glyph}" Text="&#xF140;" />
                           </Button>
@@ -228,14 +255,17 @@
                       <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <ToggleButton Style="{StaticResource ChevronToggle}" IsChecked="{Binding IsExpanded, Mode=TwoWay}" />
-                    <Image Grid.Column="1" Source="{Binding FlagImage}" Width="22" Height="15" Stretch="Uniform"
-                           Margin="0,0,8,0" VerticalAlignment="Center"
-                           RenderOptions.BitmapScalingMode="HighQuality"
-                           ToolTip="{Binding GeoText}"
-                           Visibility="{Binding CountryCode, Converter={StaticResource NonEmptyVis}}" />
-                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
-                      <TextBlock Text="{Binding Address}" Style="{StaticResource IpText}" FontSize="14" FontWeight="SemiBold"
-                                 Tag="{Binding Address}" MouseLeftButtonUp="CopyIp_MouseUp" />
+                    <StackPanel Grid.Column="1" Grid.ColumnSpan="2" VerticalAlignment="Center">
+                      <StackPanel Orientation="Horizontal">
+                        <Image Source="{Binding FlagImage}" Width="16" Height="11" Stretch="Uniform"
+                               Margin="0,0,8,0" VerticalAlignment="Center"
+                               RenderOptions.BitmapScalingMode="HighQuality"
+                               ToolTip="{Binding GeoText}"
+                               Visibility="{Binding CountryCode, Converter={StaticResource NonEmptyVis}}" />
+                        <TextBlock Text="{Binding Address}" Style="{StaticResource IpText}" FontSize="14" FontWeight="SemiBold"
+                                   VerticalAlignment="Center"
+                                   Tag="{Binding Address}" MouseLeftButtonUp="CopyIp_MouseUp" />
+                      </StackPanel>
                       <TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource MutedBrush}" FontSize="12" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
                     <TextBlock Grid.Column="3" Text="{Binding RateText}" FontFamily="{StaticResource MonoFont}"
@@ -287,8 +317,7 @@
             <ColumnDefinition Width="56" />
             <ColumnDefinition Width="48" />
             <ColumnDefinition Width="1.4*" />
-            <ColumnDefinition Width="22" />
-            <ColumnDefinition Width="1.7*" />
+            <ColumnDefinition Width="1.9*" />
             <ColumnDefinition Width="1.3*" />
             <ColumnDefinition Width="120" />
             <ColumnDefinition Width="28" />
@@ -298,9 +327,9 @@
           <TextBlock Grid.Column="1" Text="PID" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
           <TextBlock Grid.Column="2" Text="Proto" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
           <TextBlock Grid.Column="3" Text="Local" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="5" Text="Remoto" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="6" Text="Host" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="7" Text="Velocidade" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="4" Text="Remoto" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="5" Text="Host" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="6" Text="Velocidade" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
         </Grid>
         <ListView x:Name="ConnectionsList" ItemsSource="{Binding Connections}"
                   Background="Transparent"
@@ -340,8 +369,7 @@
                   <ColumnDefinition Width="56" />
                   <ColumnDefinition Width="48" />
                   <ColumnDefinition Width="1.4*" />
-                  <ColumnDefinition Width="22" />
-                  <ColumnDefinition Width="1.7*" />
+                  <ColumnDefinition Width="1.9*" />
                   <ColumnDefinition Width="1.3*" />
                   <ColumnDefinition Width="120" />
                   <ColumnDefinition Width="28" />
@@ -355,18 +383,21 @@
                 <TextBlock Grid.Column="2" Text="{Binding ProtocolText}" />
                 <TextBlock Grid.Column="3" Text="{Binding LocalDisplay}" Style="{StaticResource IpText}" FontSize="12"
                            Tag="{Binding LocalAddress}" MouseLeftButtonUp="CopyIp_MouseUp" />
-                <Image Grid.Column="4" Source="{Binding FlagImage}" Width="18" Height="12" Stretch="Uniform"
-                       RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center"
-                       ToolTip="{Binding GeoText}"
-                       Visibility="{Binding CountryCode, Converter={StaticResource NonEmptyVis}}" />
-                <TextBlock Grid.Column="5" Text="{Binding RemoteDisplay}" Style="{StaticResource IpText}" FontSize="12"
-                           Tag="{Binding RemoteAddress}" MouseLeftButtonUp="CopyIp_MouseUp" />
-                <TextBlock Grid.Column="6" Text="{Binding HostDisplay}" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" />
-                <TextBlock Grid.Column="7" Text="{Binding RateText}" FontFamily="{StaticResource MonoFont}" FontSize="11" />
-                <TextBlock Grid.Column="8" Style="{StaticResource Glyph}" Text="{Binding State, Converter={StaticResource StateIcon}}"
+                <StackPanel Grid.Column="4" Orientation="Horizontal" VerticalAlignment="Center">
+                  <Image Source="{Binding FlagImage}" Width="16" Height="11" Stretch="Uniform"
+                         Margin="0,0,8,0" VerticalAlignment="Center"
+                         RenderOptions.BitmapScalingMode="HighQuality"
+                         ToolTip="{Binding GeoText}"
+                         Visibility="{Binding CountryCode, Converter={StaticResource NonEmptyVis}}" />
+                  <TextBlock Text="{Binding RemoteDisplay}" Style="{StaticResource IpText}" FontSize="12" VerticalAlignment="Center"
+                             Tag="{Binding RemoteAddress}" MouseLeftButtonUp="CopyIp_MouseUp" />
+                </StackPanel>
+                <TextBlock Grid.Column="5" Text="{Binding HostDisplay}" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="6" Text="{Binding RateText}" FontFamily="{StaticResource MonoFont}" FontSize="11" />
+                <TextBlock Grid.Column="7" Style="{StaticResource Glyph}" Text="{Binding State, Converter={StaticResource StateIcon}}"
                            Foreground="{Binding State, Converter={StaticResource StateBrush}}"
                            ToolTip="{Binding State, Converter={StaticResource State}}" />
-                <TextBlock Grid.Column="9" Style="{StaticResource Glyph}" Text="{Binding Scope, Converter={StaticResource ScopeIcon}}"
+                <TextBlock Grid.Column="8" Style="{StaticResource Glyph}" Text="{Binding Scope, Converter={StaticResource ScopeIcon}}"
                            Foreground="{Binding Scope, Converter={StaticResource ScopeBrush}}"
                            ToolTip="{Binding Scope, Converter={StaticResource Scope}}" />
               </Grid>
@@ -391,8 +422,7 @@
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1.8*" />
             <ColumnDefinition Width="70" />
-            <ColumnDefinition Width="22" />
-            <ColumnDefinition Width="1.8*" />
+            <ColumnDefinition Width="2*" />
             <ColumnDefinition Width="1.4*" />
             <ColumnDefinition Width="90" />
             <ColumnDefinition Width="80" />
@@ -400,11 +430,11 @@
           </Grid.ColumnDefinitions>
           <TextBlock Text="Aplicativo" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
           <TextBlock Grid.Column="1" Text="PID" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="3" Text="Remoto" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="4" Text="Host" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="5" Text="Encerrou" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="6" Text="Durou" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="7" Text="Há" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="2" Text="Remoto" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="3" Text="Host" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="4" Text="Encerrou" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="5" Text="Durou" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="6" Text="Há" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
         </Grid>
         <ListView ItemsSource="{Binding ClosedConnections}"
                   Background="Transparent"
@@ -433,8 +463,7 @@
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="1.8*" />
                   <ColumnDefinition Width="70" />
-                  <ColumnDefinition Width="22" />
-                  <ColumnDefinition Width="1.8*" />
+                  <ColumnDefinition Width="2*" />
                   <ColumnDefinition Width="1.4*" />
                   <ColumnDefinition Width="90" />
                   <ColumnDefinition Width="80" />
@@ -445,16 +474,19 @@
                   <TextBlock Text="{Binding ProcessName}" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
                 <TextBlock Grid.Column="1" Text="{Binding Pid}" Foreground="{DynamicResource MutedBrush}" />
-                <Image Grid.Column="2" Source="{Binding FlagImage}" Width="18" Height="12" Stretch="Uniform"
-                       RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center"
-                       ToolTip="{Binding GeoText}"
-                       Visibility="{Binding CountryCode, Converter={StaticResource NonEmptyVis}}" />
-                <TextBlock Grid.Column="3" Text="{Binding RemoteDisplay}" Style="{StaticResource IpText}" FontSize="12"
-                           Tag="{Binding RemoteAddress}" MouseLeftButtonUp="CopyIp_MouseUp" />
-                <TextBlock Grid.Column="4" Text="{Binding HostDisplay}" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" />
-                <TextBlock Grid.Column="5" Text="{Binding EndedLabel}" />
-                <TextBlock Grid.Column="6" Text="{Binding DurationLabel}" Foreground="{DynamicResource MutedBrush}" />
-                <TextBlock Grid.Column="7" Text="{Binding AgoLabel}" Foreground="{DynamicResource MutedBrush}" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                  <Image Source="{Binding FlagImage}" Width="16" Height="11" Stretch="Uniform"
+                         Margin="0,0,8,0" VerticalAlignment="Center"
+                         RenderOptions.BitmapScalingMode="HighQuality"
+                         ToolTip="{Binding GeoText}"
+                         Visibility="{Binding CountryCode, Converter={StaticResource NonEmptyVis}}" />
+                  <TextBlock Text="{Binding RemoteDisplay}" Style="{StaticResource IpText}" FontSize="12" VerticalAlignment="Center"
+                             Tag="{Binding RemoteAddress}" MouseLeftButtonUp="CopyIp_MouseUp" />
+                </StackPanel>
+                <TextBlock Grid.Column="3" Text="{Binding HostDisplay}" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="4" Text="{Binding EndedLabel}" />
+                <TextBlock Grid.Column="5" Text="{Binding DurationLabel}" Foreground="{DynamicResource MutedBrush}" />
+                <TextBlock Grid.Column="6" Text="{Binding AgoLabel}" Foreground="{DynamicResource MutedBrush}" />
               </Grid>
             </DataTemplate>
           </ListView.ItemTemplate>
@@ -471,6 +503,9 @@
                   Content="{Binding UpdateLabel}"
                   Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVis}}"
                   Click="ApplyUpdate_Click" Margin="0,0,14,0" ToolTip="Há uma versão nova no GitHub" />
+          <TextBlock Text="{Binding VersionLabel}" FontSize="12" FontWeight="SemiBold"
+                     Foreground="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+          <TextBlock Text="·" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
           <TextBlock FontSize="12" VerticalAlignment="Center">
             <Hyperlink NavigateUri="https://cirobrandao.com.br/" RequestNavigate="Site_RequestNavigate">cirobrandao.com.br</Hyperlink>
           </TextBlock>
@@ -611,6 +646,67 @@
 
             <Button Style="{StaticResource GhostButton}" Content="Fechar" Margin="0,16,0,8" Click="CloseSettings_Click" />
           </StackPanel>
+          </ScrollViewer>
+        </DockPanel>
+      </Border>
+    </Grid>
+
+    <Grid Grid.RowSpan="6" Visibility="{Binding DnsOpen, Converter={StaticResource BoolToVis}}">
+      <Border Background="#66000000" MouseDown="CloseDnsScrim_MouseDown" />
+      <Border HorizontalAlignment="Right" Width="440" Background="{DynamicResource SurfaceBrush}"
+              BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0" Padding="20">
+        <DockPanel>
+          <DockPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+            <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Width="32" Height="32" Padding="0"
+                    ToolTip="Fechar teste de DNS" Click="CloseDns_Click">
+              <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE711;" FontSize="12" />
+            </Button>
+            <StackPanel>
+              <TextBlock Text="Teste de DNS" FontSize="18" FontWeight="SemiBold" />
+              <TextBlock Text="Compara o tempo de resposta dos servidores." Style="{StaticResource SettingsHint}" Margin="0,4,0,0" />
+            </StackPanel>
+          </DockPanel>
+          <TextBlock DockPanel.Dock="Bottom" Text="{Binding DnsStatus}" Margin="0,12,0,0"
+                     Foreground="{DynamicResource MutedBrush}" TextWrapping="Wrap" />
+          <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+              <TextBlock Text="Hosts" FontSize="12" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,6" />
+              <TextBox Text="{Binding DnsHosts, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,0,10" />
+              <Button Style="{StaticResource AccentButton}" Content="Testar agora"
+                      Click="RunDns_Click" IsEnabled="{Binding DnsIdle}" HorizontalAlignment="Left" Margin="0,0,0,16" />
+              <ItemsControl ItemsSource="{Binding DnsResults}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate>
+                    <Border Background="{DynamicResource Surface2Brush}" BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1" Padding="12,10" Margin="0,0,0,8">
+                      <Grid>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="*" />
+                          <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                          <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                            <Border Background="#0D7A5F" CornerRadius="4" Padding="6,1" Margin="8,0,0,0"
+                                    Visibility="{Binding IsBest, Converter={StaticResource BoolToVis}}">
+                              <TextBlock Text="Mais rápido" FontSize="10" Foreground="White" />
+                            </Border>
+                          </StackPanel>
+                          <TextBlock Text="{Binding Address}" FontFamily="{StaticResource MonoFont}" FontSize="12"
+                                     Foreground="{DynamicResource MutedBrush}" Margin="0,2,0,0" />
+                          <TextBlock Text="{Binding SamplesText}" Foreground="{DynamicResource MutedBrush}" FontSize="11"
+                                     TextWrapping="Wrap" Margin="0,6,0,0" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="12,0,0,0">
+                          <TextBlock Text="{Binding AverageText}" FontWeight="SemiBold" FontSize="16" HorizontalAlignment="Right" />
+                          <TextBlock Text="{Binding Status}" FontSize="11" Foreground="{DynamicResource MutedBrush}" HorizontalAlignment="Right" />
+                        </StackPanel>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+            </StackPanel>
           </ScrollViewer>
         </DockPanel>
       </Border>
