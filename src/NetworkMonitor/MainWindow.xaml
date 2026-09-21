@@ -516,6 +516,7 @@
 
             <TextBlock Text="Widget" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,8" />
             <CheckBox Content="Mostrar widget" IsChecked="{Binding ShowOverlay}" />
+            <CheckBox Content="Tema claro no overlay" IsChecked="{Binding OverlayThemeIsLight}" />
             <TextBlock Text="Modelo" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,8,0,6" />
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
               <RadioButton Style="{StaticResource Segment}" GroupName="OverlayMode" Content="Completo" IsChecked="{Binding OverlayComplete}" />

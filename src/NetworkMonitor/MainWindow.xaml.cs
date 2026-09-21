@@ -183,8 +183,13 @@ public partial class MainWindow : Window
     private void RestartAdmin_Click(object sender, RoutedEventArgs e)
         => (System.Windows.Application.Current as App)?.RestartElevated();
 
-    private static void ShowBlockResult(string message)
-        => System.Windows.MessageBox.Show(message, "Network Monitor", MessageBoxButton.OK, MessageBoxImage.Information);
+        private static void ShowBlockResult(string message)
+    {
+        var ok = message.StartsWith("Bloqueio aplicado", StringComparison.Ordinal)
+              || message.StartsWith("Bloqueio removido", StringComparison.Ordinal);
+        var image = ok ? MessageBoxImage.Information : MessageBoxImage.Warning;
+        System.Windows.MessageBox.Show(message, "Network Monitor", MessageBoxButton.OK, image);
+    }
 
     private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
     {

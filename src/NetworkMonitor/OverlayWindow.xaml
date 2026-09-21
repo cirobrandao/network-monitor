@@ -57,8 +57,8 @@
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBlock Text="Network Monitor" FontSize="13" FontWeight="SemiBold" Foreground="#12344D" />
-        <TextBlock Grid.Row="1" x:Name="AdapterLabel" Text="{Binding AdapterName}" Foreground="#5C6773"
+        <TextBlock Text="Network Monitor" FontSize="13" FontWeight="SemiBold" Foreground="{Binding OverlayForegroundBrush}" />
+        <TextBlock Grid.Row="1" x:Name="AdapterLabel" Text="{Binding AdapterName}" Foreground="{Binding OverlayMutedBrush}"
                    FontSize="11" TextTrimming="CharacterEllipsis" Margin="0,2,0,8" />
         <Grid Grid.Row="2" Margin="0,0,0,3">
           <Grid.ColumnDefinitions>
@@ -67,7 +67,7 @@
           </Grid.ColumnDefinitions>
           <TextBlock Text="Int IP" Foreground="#8A94A0" FontSize="11" Margin="0,0,8,0" />
           <TextBlock Grid.Column="1" x:Name="InternalIpLabel" HorizontalAlignment="Right" Text="{Binding InternalIp}"
-                     Foreground="#12344D" FontSize="11" FontFamily="{StaticResource MonoFont}"
+                     Foreground="{Binding OverlayForegroundBrush}" FontSize="11" FontFamily="{StaticResource MonoFont}"
                      TextTrimming="CharacterEllipsis" />
         </Grid>
         <Grid Grid.Row="3" Margin="0,0,0,3">
@@ -77,7 +77,7 @@
           </Grid.ColumnDefinitions>
           <TextBlock Text="Ext IP" Foreground="#8A94A0" FontSize="11" Margin="0,0,8,0" />
           <TextBlock Grid.Column="1" x:Name="PublicIpLabel" HorizontalAlignment="Right" Text="{Binding PublicIp}"
-                     Foreground="#12344D" FontSize="11" FontFamily="{StaticResource MonoFont}"
+                     Foreground="{Binding OverlayForegroundBrush}" FontSize="11" FontFamily="{StaticResource MonoFont}"
                      TextTrimming="CharacterEllipsis" />
         </Grid>
         <Grid Grid.Row="4" Margin="0,0,0,8">
@@ -87,7 +87,7 @@
           </Grid.ColumnDefinitions>
           <TextBlock Text="Conexões" Foreground="#8A94A0" FontSize="11" Margin="0,0,8,0" />
           <TextBlock Grid.Column="1" x:Name="ConnectionLabel" HorizontalAlignment="Right" Text="{Binding ConnectionCount}"
-                     Foreground="#12344D" FontSize="11" FontFamily="{StaticResource MonoFont}" />
+                     Foreground="{Binding OverlayForegroundBrush}" FontSize="11" FontFamily="{StaticResource MonoFont}" />
         </Grid>
         <Border Grid.Row="5" Background="#F4F6F8" CornerRadius="4" Margin="0,0,0,8" MinHeight="72">
           <local:BandwidthChart x:Name="TrafficChart" Compact="True" UseOverlayChart="True"
@@ -148,6 +148,7 @@
         <local:BandwidthChart x:Name="SimpleChart" Grid.Column="1" Compact="True" UseOverlayChart="True"
                               IsHitTestVisible="False" />
       </Grid>
-    </Grid>
+            <TextBlock Text="{Binding TopProcessBandwidthText}" FontSize="10" Foreground="{Binding OverlayMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0" />
+</Grid>
   </Border>
 </Window>

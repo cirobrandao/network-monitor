@@ -19,6 +19,9 @@ public sealed class AppState : ObservableObject
     private int _histCount;
     private bool _persistReady;
     private bool _wasPeaking;
+    private readonly ProcessBandwidthService _processBw = new();
+    private readonly Dictionary<string, string> _geo = new(StringComparer.OrdinalIgnoreCase);
+    private IReadOnlyList<ProcessBandwidthItem> _topBw = Array.Empty<ProcessBandwidthItem>();
     private string _search = "";
     private ViewMode _viewMode = ViewMode.Processes;
     private bool _settingsOpen;
@@ -91,6 +94,41 @@ public sealed class AppState : ObservableObject
         }
     }
     public string PeakText { get => _peakText; private set => Set(ref _peakText, value); }
+
+    public IReadOnlyList<ProcessBandwidthItem> TopProcessBandwidth
+    {
+        get => _topBw;
+        private set => Set(ref _topBw, value);
+    }
+
+    public string TopProcessBandwidthText =>
+        _topBw.Count == 0 ? string.Empty : string.Join(" | ", _topBw.Take(3).Select(x => x.Label));
+
+    public bool OverlayThemeIsLight
+    {
+        get => string.Equals(Settings.OverlayTheme, "Light", StringComparison.OrdinalIgnoreCase);
+        set
+        {
+            var t = value ? "Light" : "Dark";
+            if (string.Equals(Settings.OverlayTheme, t, StringComparison.OrdinalIgnoreCase)) return;
+            Settings.OverlayTheme = t;
+            Persist();
+            Raise(nameof(OverlayThemeIsLight));
+            Raise(nameof(OverlayBackgroundBrush));
+            Raise(nameof(OverlayForegroundBrush));
+            Raise(nameof(OverlayMutedBrush));
+            OverlayStyleChanged?.Invoke();
+        }
+    }
+
+    public Brush OverlayForegroundBrush => OverlayThemeIsLight
+        ? new SolidColorBrush(Color.FromRgb(0x12, 0x34, 0x4D))
+        : new SolidColorBrush(Color.FromRgb(0xEC, 0xF2, 0xF8));
+
+    public Brush OverlayMutedBrush => OverlayThemeIsLight
+        ? new SolidColorBrush(Color.FromRgb(0x5C, 0x67, 0x73))
+        : new SolidColorBrush(Color.FromRgb(0x9A, 0xA7, 0xB5));
+
     public IReadOnlyList<double> DownHistory { get => _downHistory; private set => Set(ref _downHistory, value); }
     public IReadOnlyList<double> UpHistory { get => _upHistory; private set => Set(ref _upHistory, value); }
     public IReadOnlyList<DnsServerRow> DnsResults { get => _dnsResults; private set => Set(ref _dnsResults, value); }
@@ -107,7 +145,7 @@ public sealed class AppState : ObservableObject
     }
     public bool DnsIdle => !DnsBusy;
     public bool IsElevated { get; } = FirewallService.IsElevated;
-    public string ElevationText => IsElevated ? "Executando como administrador" : "Sem administrador — bloqueios precisam de elevação";
+    public string ElevationText => IsElevated ? "Executando como administrador" : "Sem administrador — o bloqueio pedirá elevação (UAC) quando necessário";
     public bool OverlayComplete
     {
         get => !OverlayCompact;
@@ -119,7 +157,7 @@ public sealed class AppState : ObservableObject
     {
         get
         {
-            var baseColor = IsPeaking ? Color.FromRgb(0xFF, 0xF8, 0xF4) : Color.FromRgb(0xFF, 0xFF, 0xFF);
+            var baseColor = IsPeaking ? (OverlayThemeIsLight ? Color.FromRgb(0xFF, 0xF8, 0xF4) : Color.FromRgb(0x5A, 0x22, 0x18)) : (OverlayThemeIsLight ? Color.FromRgb(0xFF, 0xFF, 0xFF) : Color.FromRgb(0x16, 0x1B, 0x22));
             var alpha = (byte)Math.Round(Math.Clamp(Settings.OverlayBackgroundOpacity, 0, 1) * 255);
             var brush = new SolidColorBrush(Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B));
             brush.Freeze();
@@ -568,6 +606,45 @@ public sealed class AppState : ObservableObject
         PublicIp = string.IsNullOrWhiteSpace(ip) ? "—" : ip;
     }
 
+    internal void SetProcessBandwidth(IReadOnlyList<ProcessBandwidthRow> rows)
+    {
+        TopProcessBandwidth = rows.Select(r => new ProcessBandwidthItem
+        {
+            Name = r.Name,
+            Label = r.Label,
+            DownBps = r.DownBps,
+            UpBps = r.UpBps
+        }).ToList();
+        Raise(nameof(TopProcessBandwidthText));
+        UpdatePeaks();
+    }
+
+    internal void RequestGeo(string ip)
+    {
+        if (string.IsNullOrWhiteSpace(ip) || GeoIpService.IsNonPublic(ip)) return;
+        if (_geo.ContainsKey(ip)) return;
+        var cached = GeoIpService.TryGetCached(ip);
+        if (cached is not null)
+        {
+            _geo[ip] = cached.Display;
+            return;
+        }
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var info = await GeoIpService.LookupAsync(ip).ConfigureAwait(false);
+                if (info is null) return;
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    _geo[ip] = info.Display;
+                    RebuildViews();
+                });
+            }
+            catch { }
+        });
+    }
+
     public void ApplySnapshot(BandwidthSnapshot bandwidth, List<NetConnection> connections)
     {
         DownBps = bandwidth.DownBps;
@@ -700,8 +777,7 @@ public sealed class AppState : ObservableObject
         Func<string, bool> block,
         Func<string, bool> unblock)
     {
-        if (!FirewallService.IsElevated)
-            return "O Firewall do Windows exige executar o monitor como administrador.";
+        // ElevaÃ§Ã£o UAC sob demanda ocorre dentro do FirewallService (Verb=runas).
 
         var exists = list.Contains(key, StringComparer.OrdinalIgnoreCase);
         var ok = exists ? unblock(key) : block(key);
@@ -815,16 +891,31 @@ public sealed class AppState : ObservableObject
         var peakDown = Settings.PeakDownMBps > 0 && DownBps >= downLimit;
         var peakUp = Settings.PeakUpMBps > 0 && UpBps >= upLimit;
         var peaking = peakDown || peakUp;
+        string? ruleText = null;
+        foreach (var rule in Settings.AlertRules ?? [])
+        {
+            if (!rule.Enabled || string.IsNullOrWhiteSpace(rule.ProcessNameContains)) continue;
+            var hit = TopProcessBandwidth.FirstOrDefault(p => p.Name.Contains(rule.ProcessNameContains, StringComparison.OrdinalIgnoreCase));
+            if (hit is null) continue;
+            var downMb = hit.DownBps / (1024d * 1024d);
+            var upMb = hit.UpBps / (1024d * 1024d);
+            if ((rule.MaxDownMBps > 0 && downMb >= rule.MaxDownMBps) || (rule.MaxUpMBps > 0 && upMb >= rule.MaxUpMBps))
+            {
+                peaking = true;
+                ruleText = "Alerta " + hit.Name + ": " + Format.Rate(hit.DownBps) + " down / " + Format.Rate(hit.UpBps) + " up";
+                break;
+            }
+        }
         var wasPeakingUi = IsPeaking;
         IsPeaking = peaking;
         if (wasPeakingUi != peaking)
             OverlayStyleChanged?.Invoke();
         PeakText = peaking
-            ? peakDown && peakUp
+            ? ruleText ?? (peakDown && peakUp
                 ? $"Pico de consumo  ↓ {DownText}  ↑ {UpText}"
                 : peakDown
                     ? $"Pico de download  {DownText}"
-                    : $"Pico de upload  {UpText}"
+                    : $"Pico de upload  {UpText}")
             : "";
 
         if (peaking && !_wasPeaking)
@@ -901,6 +992,7 @@ public sealed class AppState : ObservableObject
             .Select(g => new IpGroup
             {
                 Address = g.Key,
+                GeoText = _geo.TryGetValue(g.Key, out var geoTxt) ? geoTxt : string.Empty,
                 HostName = g.Select(x => x.HostName).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)),
                 Scope = g.First().Scope,
                 ConnectionCount = g.Count(),

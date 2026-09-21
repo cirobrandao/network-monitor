@@ -7,6 +7,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3D97E43D-543
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkMonitor", "src\NetworkMonitor\NetworkMonitor.csproj", "{43B3FFD1-6A33-4ED2-81EF-B47667EF8CC8}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{B899135C-A900-4C67-A564-1EC3313936F0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NetworkMonitor.Tests", "tests\NetworkMonitor.Tests\NetworkMonitor.Tests.csproj", "{C75BAA05-DFA3-43F1-BA88-46A9F18CF4D7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,8 +24,13 @@ Global
 		{43B3FFD1-6A33-4ED2-81EF-B47667EF8CC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{43B3FFD1-6A33-4ED2-81EF-B47667EF8CC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{43B3FFD1-6A33-4ED2-81EF-B47667EF8CC8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C75BAA05-DFA3-43F1-BA88-46A9F18CF4D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C75BAA05-DFA3-43F1-BA88-46A9F18CF4D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C75BAA05-DFA3-43F1-BA88-46A9F18CF4D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C75BAA05-DFA3-43F1-BA88-46A9F18CF4D7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{43B3FFD1-6A33-4ED2-81EF-B47667EF8CC8} = {3D97E43D-543F-46AC-9350-43AA9EE1AE6B}
+		{C75BAA05-DFA3-43F1-BA88-46A9F18CF4D7} = {B899135C-A900-4C67-A564-1EC3313936F0}
 	EndGlobalSection
 EndGlobal

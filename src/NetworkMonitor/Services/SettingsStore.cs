@@ -4,6 +4,14 @@ using System.Text.Json.Serialization;
 
 namespace NetworkMonitor.Services;
 
+
+public sealed class AlertRule
+{
+    public string ProcessNameContains { get; set; } = "";
+    public double MaxDownMBps { get; set; } = 5;
+    public double MaxUpMBps { get; set; } = 2;
+    public bool Enabled { get; set; } = true;
+}
 public sealed class AppSettings
 {
     public bool ShowOverlay { get; set; } = true;
@@ -40,6 +48,8 @@ public sealed class AppSettings
     public double PeakUpMBps { get; set; } = 3;
     public List<string> DisabledAdapters { get; set; } = [];
     public bool FirstRun { get; set; } = true;
+    public string OverlayTheme { get; set; } = "Dark";
+    public List<AlertRule> AlertRules { get; set; } = [];
 }
 
 internal static class SettingsStore

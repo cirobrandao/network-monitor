@@ -21,6 +21,7 @@ public partial class App : Application
     private CancellationTokenSource? _publicIpCts;
     private bool _ownsMutex;
     private readonly BandwidthMonitor _bandwidth = new();
+    private readonly ProcessBandwidthService _processBw = new();
     private readonly ProcessResolver _processes = new();
     private readonly DnsResolver _dns = new();
     private readonly PublicIpService _publicIp = new();
@@ -194,6 +195,7 @@ public partial class App : Application
                 var settings = AppState.Current.Settings;
                 var bandwidth = _bandwidth.Capture(settings.DisabledAdapters);
                 var raw = IpHelper.GetAll(settings.ShowUdp);
+                var topBw = _processBw.Sample(raw, 5);
                 var mapped = new List<(Native.RawConnection Row, ProcessInfo Process, AddressScope Scope, string? Host)>(raw.Count);
                 foreach (var row in raw)
                 {
@@ -230,6 +232,7 @@ public partial class App : Application
                         });
                     }
                     AppState.Current.ApplySnapshot(bandwidth, connections);
+                    AppState.Current.SetProcessBandwidth(topBw);
                 });
             }
             catch

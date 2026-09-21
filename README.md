@@ -57,3 +57,20 @@ O app consulta `https://github.com/cirobrandao/network-monitor/releases/latest` 
 ```
 
 Isso compila, gera o zip, cria a tag `v1.1.0` e a release com o asset.
+
+
+## Instalacao por usuario (sem admin)
+
+```powershell
+.\scripts\build.ps1
+.\scripts\install-user.ps1
+.\scripts\uninstall-user.ps1
+```
+
+## Novidades 1.1
+
+- UAC sob demanda no bloqueio
+- Geo/ASN com cache
+- Bandwidth por processo (EStats)
+- Alertas por processo (settings.json AlertRules)
+- Tema claro/escuro do overlay

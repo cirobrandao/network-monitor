@@ -53,6 +53,7 @@ public sealed class NetConnection
     public string LocalDisplay => $"{LocalAddress}:{LocalPort}";
     public string RemoteDisplay => string.IsNullOrEmpty(RemoteAddress) ? "—" : $"{RemoteAddress}:{RemotePort}";
     public string HostDisplay => string.IsNullOrWhiteSpace(HostName) ? "—" : HostName;
+    public string GeoText { get; init; } = "";
     public string Key => $"{Protocol}|{Pid}|{LocalDisplay}|{RemoteDisplay}";
 }
 
@@ -90,6 +91,7 @@ public sealed class IpGroup : ObservableObject
     public required IReadOnlyList<NetConnection> Connections { get; init; }
     public bool IsBlocked { get; init; }
     public string HostDisplay => string.IsNullOrWhiteSpace(HostName) ? "—" : HostName;
+    public string GeoText { get; init; } = "";
     public string CountLabel => $"{ConnectionCount} conexões · {Apps}";
     public string BlockLabel => IsBlocked ? "Desbloquear IP" : "Bloquear IP";
 
@@ -117,6 +119,7 @@ public sealed class ClosedConnection
     public required string DurationLabel { get; init; }
     public required string AgoLabel { get; init; }
     public string HostDisplay => string.IsNullOrWhiteSpace(HostName) ? "—" : HostName;
+    public string GeoText { get; init; } = "";
 }
 
 public sealed class DnsServerRow
@@ -174,4 +177,12 @@ public sealed class AdapterOption : ObservableObject
                 AppState.Current.OnAdapterEnabledChanged();
         }
     }
+}
+
+public sealed class ProcessBandwidthItem
+{
+    public required string Name { get; init; }
+    public required string Label { get; init; }
+    public required double DownBps { get; init; }
+    public required double UpBps { get; init; }
 }
