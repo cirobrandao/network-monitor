@@ -89,7 +89,7 @@
           <TextBlock Grid.Column="1" x:Name="ConnectionLabel" HorizontalAlignment="Right" Text="{Binding ConnectionCount}"
                      Foreground="{Binding OverlayForegroundBrush}" FontSize="11" FontFamily="{StaticResource MonoFont}" />
         </Grid>
-        <Border Grid.Row="5" Background="#F4F6F8" CornerRadius="4" Margin="0,0,0,8" MinHeight="72">
+        <Border Grid.Row="5" Background="{DynamicResource Surface2Brush}" CornerRadius="4" Margin="0,0,0,8" MinHeight="72">
           <local:BandwidthChart x:Name="TrafficChart" Compact="True" UseOverlayChart="True"
                                 IsHitTestVisible="False" />
         </Border>
@@ -148,7 +148,6 @@
         <local:BandwidthChart x:Name="SimpleChart" Grid.Column="1" Compact="True" UseOverlayChart="True"
                               IsHitTestVisible="False" />
       </Grid>
-            <TextBlock Text="{Binding TopProcessBandwidthText}" FontSize="10" Foreground="{Binding OverlayMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0" />
-</Grid>
+    </Grid>
   </Border>
 </Window>

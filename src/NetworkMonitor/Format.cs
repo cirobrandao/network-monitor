@@ -76,6 +76,22 @@ internal static class Format
         _ => "—"
     };
 
+    public static string FlagEmoji(string? countryCode)
+    {
+        if (string.IsNullOrWhiteSpace(countryCode) || countryCode.Length != 2)
+            return "";
+        var a = char.ToUpperInvariant(countryCode[0]);
+        var b = char.ToUpperInvariant(countryCode[1]);
+        if (a is < 'A' or > 'Z' || b is < 'A' or > 'Z')
+            return "";
+        return string.Concat(
+            char.ConvertFromUtf32(0x1F1E6 + (a - 'A')),
+            char.ConvertFromUtf32(0x1F1E6 + (b - 'A')));
+    }
+
+    public static string RatePair(double downBps, double upBps)
+        => $"{Rate(downBps)} ↓  {Rate(upBps)} ↑";
+
     public static AddressScope Classify(string ip)
     {
         if (string.IsNullOrWhiteSpace(ip) || ip is "0.0.0.0" or "::" or "::0")

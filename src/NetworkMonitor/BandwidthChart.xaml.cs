@@ -130,10 +130,11 @@ public partial class BandwidthChart : UserControl
     {
         var baseline = top + h / 2;
         var halfHeight = Math.Max(0, h / 2 - 2);
-        var samplesPerBar = Math.Max(1, (int)Math.Ceiling(60 / Math.Max(1, w / 4)));
-        var slots = (int)Math.Ceiling(60d / samplesPerBar);
-        var slotWidth = w / slots;
-        var barWidth = Math.Max(0.5, slotWidth - 1.5);
+        const double barWidth = 2.0;
+        const double gap = 2.2;
+        var slotWidth = barWidth + gap;
+        var slots = Math.Max(8, (int)(w / slotWidth));
+        var samplesPerBar = Math.Max(1, (int)Math.Ceiling(count / (double)slots));
 
         Plot.Children.Add(new Line
         {

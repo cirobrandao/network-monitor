@@ -19,9 +19,15 @@ public sealed class AppState : ObservableObject
     private int _histCount;
     private bool _persistReady;
     private bool _wasPeaking;
-    private readonly ProcessBandwidthService _processBw = new();
-    private readonly Dictionary<string, string> _geo = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, GeoInfo> _geo = new(StringComparer.OrdinalIgnoreCase);
+    private IReadOnlyDictionary<string, Rates> _bwByConn = TrafficSnapshot.Empty.ByConnection;
+    private IReadOnlyDictionary<int, Rates> _bwByPid = TrafficSnapshot.Empty.ByPid;
+    private IReadOnlyDictionary<string, Rates> _bwByRemote = TrafficSnapshot.Empty.ByRemote;
     private IReadOnlyList<ProcessBandwidthItem> _topBw = Array.Empty<ProcessBandwidthItem>();
+    private string? _flashStatus;
+    private DateTime _flashUntil;
+    private bool _updateAvailable;
+    private string _updateLabel = "";
     private string _search = "";
     private ViewMode _viewMode = ViewMode.Processes;
     private bool _settingsOpen;
@@ -61,6 +67,7 @@ public sealed class AppState : ObservableObject
     public event Action? OverlayVisibilityChanged;
     public event Action? OverlayStyleChanged;
     public event Action? RefreshIntervalChanged;
+    public event Action? ThemeChanged;
     public event Action<string>? PeakRaised;
 
     public double DownBps { get => _downBps; private set => Set(ref _downBps, value); }
@@ -104,21 +111,39 @@ public sealed class AppState : ObservableObject
     public string TopProcessBandwidthText =>
         _topBw.Count == 0 ? string.Empty : string.Join(" | ", _topBw.Take(3).Select(x => x.Label));
 
-    public bool OverlayThemeIsLight
+    public bool UpdateAvailable
     {
-        get => string.Equals(Settings.OverlayTheme, "Light", StringComparison.OrdinalIgnoreCase);
-        set
-        {
-            var t = value ? "Light" : "Dark";
-            if (string.Equals(Settings.OverlayTheme, t, StringComparison.OrdinalIgnoreCase)) return;
-            Settings.OverlayTheme = t;
-            Persist();
-            Raise(nameof(OverlayThemeIsLight));
-            Raise(nameof(OverlayBackgroundBrush));
-            Raise(nameof(OverlayForegroundBrush));
-            Raise(nameof(OverlayMutedBrush));
-            OverlayStyleChanged?.Invoke();
-        }
+        get => _updateAvailable;
+        private set => Set(ref _updateAvailable, value);
+    }
+
+    public string UpdateLabel
+    {
+        get => _updateLabel;
+        private set => Set(ref _updateLabel, value);
+    }
+
+    public bool OverlayThemeIsLight => IsLightTheme;
+
+    public bool IsLightTheme => Theme.ResolveLight(Settings.Theme);
+
+    public bool ThemeIsSystem
+    {
+        get => string.Equals(Settings.Theme, "System", StringComparison.OrdinalIgnoreCase)
+            || string.IsNullOrWhiteSpace(Settings.Theme);
+        set { if (value) SetTheme("System"); }
+    }
+
+    public bool ThemeIsLight
+    {
+        get => string.Equals(Settings.Theme, "Light", StringComparison.OrdinalIgnoreCase);
+        set { if (value) SetTheme("Light"); }
+    }
+
+    public bool ThemeIsDark
+    {
+        get => string.Equals(Settings.Theme, "Dark", StringComparison.OrdinalIgnoreCase);
+        set { if (value) SetTheme("Dark"); }
     }
 
     public Brush OverlayForegroundBrush => OverlayThemeIsLight
@@ -157,7 +182,9 @@ public sealed class AppState : ObservableObject
     {
         get
         {
-            var baseColor = IsPeaking ? (OverlayThemeIsLight ? Color.FromRgb(0xFF, 0xF8, 0xF4) : Color.FromRgb(0x5A, 0x22, 0x18)) : (OverlayThemeIsLight ? Color.FromRgb(0xFF, 0xFF, 0xFF) : Color.FromRgb(0x16, 0x1B, 0x22));
+            var baseColor = IsPeaking
+                ? (OverlayThemeIsLight ? Color.FromRgb(0xFF, 0xF8, 0xF4) : Color.FromRgb(0x5A, 0x22, 0x18))
+                : (OverlayThemeIsLight ? Color.FromRgb(0xFF, 0xFF, 0xFF) : Color.FromRgb(0x16, 0x1B, 0x22));
             var alpha = (byte)Math.Round(Math.Clamp(Settings.OverlayBackgroundOpacity, 0, 1) * 255);
             var brush = new SolidColorBrush(Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B));
             brush.Freeze();
@@ -561,6 +588,9 @@ public sealed class AppState : ObservableObject
             Settings.ChartType = "Area";
         if (string.IsNullOrWhiteSpace(Settings.OverlayChartType))
             Settings.OverlayChartType = "Area";
+        if (string.IsNullOrWhiteSpace(Settings.Theme)
+            || Settings.Theme is not ("System" or "Light" or "Dark"))
+            Settings.Theme = "System";
         StartupManager.Apply(Settings.StartWithWindows);
         _persistReady = true;
         Raise(nameof(ShowOverlay));
@@ -599,16 +629,75 @@ public sealed class AppState : ObservableObject
         Raise(nameof(RefreshFast));
         Raise(nameof(RefreshNormal));
         Raise(nameof(RefreshSlow));
+        RaiseTheme();
     }
+
+    private void SetTheme(string theme)
+    {
+        if (string.Equals(Settings.Theme, theme, StringComparison.OrdinalIgnoreCase))
+            return;
+        Settings.Theme = theme;
+        Persist();
+        Theme.Apply(theme);
+        RaiseTheme();
+        OverlayStyleChanged?.Invoke();
+        ThemeChanged?.Invoke();
+    }
+
+    public void ApplySystemThemeIfNeeded()
+    {
+        if (!ThemeIsSystem)
+            return;
+        Theme.Apply("System");
+        RaiseTheme();
+        OverlayStyleChanged?.Invoke();
+        ThemeChanged?.Invoke();
+    }
+
+    private void RaiseTheme()
+    {
+        Raise(nameof(ThemeIsSystem));
+        Raise(nameof(ThemeIsLight));
+        Raise(nameof(ThemeIsDark));
+        Raise(nameof(IsLightTheme));
+        Raise(nameof(OverlayThemeIsLight));
+        Raise(nameof(OverlayBackgroundBrush));
+        Raise(nameof(OverlayForegroundBrush));
+        Raise(nameof(OverlayMutedBrush));
+    }
+
+    public void SetUpdateAvailable(string? versionLabel)
+    {
+        if (string.IsNullOrWhiteSpace(versionLabel))
+        {
+            UpdateAvailable = false;
+            UpdateLabel = "";
+            return;
+        }
+        UpdateAvailable = true;
+        UpdateLabel = "Nova versão " + versionLabel;
+    }
+
+    public void FlashStatus(string message)
+    {
+        _flashStatus = message;
+        _flashUntil = DateTime.UtcNow.AddSeconds(2.5);
+        StatusText = message;
+    }
+
+    internal void RefreshViews() => RebuildViews();
 
     public void SetPublicIp(string? ip)
     {
         PublicIp = string.IsNullOrWhiteSpace(ip) ? "—" : ip;
     }
 
-    internal void SetProcessBandwidth(IReadOnlyList<ProcessBandwidthRow> rows)
+    internal void ApplyTraffic(TrafficSnapshot traffic)
     {
-        TopProcessBandwidth = rows.Select(r => new ProcessBandwidthItem
+        _bwByConn = traffic.ByConnection;
+        _bwByPid = traffic.ByPid;
+        _bwByRemote = traffic.ByRemote;
+        TopProcessBandwidth = traffic.TopProcesses.Select(r => new ProcessBandwidthItem
         {
             Name = r.Name,
             Label = r.Label,
@@ -626,7 +715,8 @@ public sealed class AppState : ObservableObject
         var cached = GeoIpService.TryGetCached(ip);
         if (cached is not null)
         {
-            _geo[ip] = cached.Display;
+            _geo[ip] = cached;
+            FlagImages.Prefetch(cached.CountryCode);
             return;
         }
         _ = Task.Run(async () =>
@@ -637,7 +727,8 @@ public sealed class AppState : ObservableObject
                 if (info is null) return;
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    _geo[ip] = info.Display;
+                    _geo[ip] = info;
+                    FlagImages.Prefetch(info.CountryCode);
                     RebuildViews();
                 });
             }
@@ -645,8 +736,10 @@ public sealed class AppState : ObservableObject
         });
     }
 
-    public void ApplySnapshot(BandwidthSnapshot bandwidth, List<NetConnection> connections)
+    internal void ApplySnapshot(BandwidthSnapshot bandwidth, List<NetConnection> connections, TrafficSnapshot? traffic = null)
     {
+        if (traffic is not null)
+            ApplyTraffic(traffic);
         DownBps = bandwidth.DownBps;
         UpBps = bandwidth.UpBps;
         DownText = Format.Rate(DownBps);
@@ -777,7 +870,7 @@ public sealed class AppState : ObservableObject
         Func<string, bool> block,
         Func<string, bool> unblock)
     {
-        // ElevaÃ§Ã£o UAC sob demanda ocorre dentro do FirewallService (Verb=runas).
+        // Elevação UAC sob demanda ocorre dentro do FirewallService (Verb=runas).
 
         var exists = list.Contains(key, StringComparer.OrdinalIgnoreCase);
         var ok = exists ? unblock(key) : block(key);
@@ -958,6 +1051,7 @@ public sealed class AppState : ObservableObject
         }
 
         var list = query
+            .Select(Enrich)
             .OrderBy(c => c.ProcessName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(c => c.RemoteAddress, StringComparer.OrdinalIgnoreCase)
             .ThenBy(c => c.RemotePort)
@@ -966,10 +1060,21 @@ public sealed class AppState : ObservableObject
         Connections = list;
         Processes = list
             .GroupBy(c => c.ProcessName, StringComparer.OrdinalIgnoreCase)
-            .OrderByDescending(g => g.Count())
+            .OrderByDescending(g => g.Sum(x => x.DownBps + x.UpBps))
+            .ThenByDescending(g => g.Count())
             .Select(g =>
             {
                 var path = g.Select(x => x.ProcessPath).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
+                var down = 0d;
+                var up = 0d;
+                foreach (var pid in g.Select(x => x.Pid).Distinct())
+                {
+                    if (_bwByPid.TryGetValue(pid, out var rates))
+                    {
+                        down += rates.DownBps;
+                        up += rates.UpBps;
+                    }
+                }
                 return new ProcessGroup
                 {
                     Name = g.Key,
@@ -980,7 +1085,9 @@ public sealed class AppState : ObservableObject
                     IpCount = g.Select(x => x.RemoteAddress).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
                     Connections = g.ToList(),
                     IsExpanded = _expandedProcesses.Contains(g.Key),
-                    IsBlocked = path is not null && Settings.BlockedPrograms.Contains(path, StringComparer.OrdinalIgnoreCase)
+                    IsBlocked = path is not null && Settings.BlockedPrograms.Contains(path, StringComparer.OrdinalIgnoreCase),
+                    DownBps = down,
+                    UpBps = up
                 };
             })
             .ToList();
@@ -988,18 +1095,29 @@ public sealed class AppState : ObservableObject
         Addresses = list
             .Where(c => c.RemoteAddress.Length > 0)
             .GroupBy(c => c.RemoteAddress, StringComparer.OrdinalIgnoreCase)
-            .OrderByDescending(g => g.Count())
-            .Select(g => new IpGroup
+            .OrderByDescending(g => g.Sum(x => x.DownBps + x.UpBps))
+            .ThenByDescending(g => g.Count())
+            .Select(g =>
             {
-                Address = g.Key,
-                GeoText = _geo.TryGetValue(g.Key, out var geoTxt) ? geoTxt : string.Empty,
-                HostName = g.Select(x => x.HostName).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)),
-                Scope = g.First().Scope,
-                ConnectionCount = g.Count(),
-                Apps = string.Join(", ", g.Select(x => x.ProcessName).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x, StringComparer.OrdinalIgnoreCase)),
-                Connections = g.ToList(),
-                IsExpanded = _expandedAddresses.Contains(g.Key),
-                IsBlocked = Settings.BlockedAddresses.Contains(g.Key, StringComparer.OrdinalIgnoreCase)
+                _geo.TryGetValue(g.Key, out var geo);
+                _bwByRemote.TryGetValue(g.Key, out var ipRates);
+                return new IpGroup
+                {
+                    Address = g.Key,
+                    Flag = Format.FlagEmoji(geo?.CountryCode),
+                    CountryCode = geo?.CountryCode ?? "",
+                    FlagImage = FlagImages.Get(geo?.CountryCode),
+                    GeoText = geo?.Display ?? string.Empty,
+                    HostName = g.Select(x => x.HostName).FirstOrDefault(x => !string.IsNullOrWhiteSpace(x)),
+                    Scope = g.First().Scope,
+                    ConnectionCount = g.Count(),
+                    Apps = string.Join(", ", g.Select(x => x.ProcessName).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x, StringComparer.OrdinalIgnoreCase)),
+                    Connections = g.ToList(),
+                    IsExpanded = _expandedAddresses.Contains(g.Key),
+                    IsBlocked = Settings.BlockedAddresses.Contains(g.Key, StringComparer.OrdinalIgnoreCase),
+                    DownBps = ipRates.DownBps,
+                    UpBps = ipRates.UpBps
+                };
             })
             .ToList();
 
@@ -1021,29 +1139,72 @@ public sealed class AppState : ObservableObject
 
         ClosedConnections = closedQuery
             .OrderByDescending(c => c.EndedAt)
-            .Select(c => new ClosedConnection
+            .Select(c =>
             {
-                ProcessName = c.Connection.ProcessName,
-                Icon = c.Connection.Icon,
-                Pid = c.Connection.Pid,
-                ProtocolText = c.Connection.ProtocolText,
-                LocalDisplay = c.Connection.LocalDisplay,
-                RemoteDisplay = c.Connection.RemoteDisplay,
-                RemoteAddress = c.Connection.RemoteAddress,
-                HostName = c.Connection.HostName,
-                Scope = c.Connection.Scope,
-                StartedAt = c.StartedAt,
-                EndedAt = c.EndedAt,
-                EndedLabel = c.EndedAt.ToLocalTime().ToString("HH:mm:ss"),
-                DurationLabel = Format.Duration(c.EndedAt - c.StartedAt),
-                AgoLabel = Format.Ago(now - c.EndedAt)
+                _geo.TryGetValue(c.Connection.RemoteAddress, out var closedGeo);
+                return new ClosedConnection
+                {
+                    ProcessName = c.Connection.ProcessName,
+                    Icon = c.Connection.Icon,
+                    Pid = c.Connection.Pid,
+                    ProtocolText = c.Connection.ProtocolText,
+                    LocalDisplay = c.Connection.LocalDisplay,
+                    RemoteDisplay = c.Connection.RemoteDisplay,
+                    RemoteAddress = c.Connection.RemoteAddress,
+                    HostName = c.Connection.HostName,
+                    Scope = c.Connection.Scope,
+                    StartedAt = c.StartedAt,
+                    EndedAt = c.EndedAt,
+                    EndedLabel = c.EndedAt.ToLocalTime().ToString("HH:mm:ss"),
+                    DurationLabel = Format.Duration(c.EndedAt - c.StartedAt),
+                    AgoLabel = Format.Ago(now - c.EndedAt),
+                    Flag = Format.FlagEmoji(closedGeo?.CountryCode),
+                    CountryCode = closedGeo?.CountryCode ?? "",
+                    FlagImage = FlagImages.Get(closedGeo?.CountryCode),
+                    GeoText = closedGeo?.Display ?? ""
+                };
             })
             .ToList();
 
         ConnectionCount = list.Count;
         ProcessCount = Processes.Count;
         AddressCount = Addresses.Count;
-        StatusText = $"{ConnectionCount} ativas · {ClosedConnections.Count} encerradas · {ProcessCount} apps · {AddressCount} IPs";
+        if (_flashStatus is not null && DateTime.UtcNow < _flashUntil)
+            StatusText = _flashStatus;
+        else
+        {
+            _flashStatus = null;
+            StatusText = $"{ConnectionCount} ativas · {ClosedConnections.Count} encerradas · {ProcessCount} apps · {AddressCount} IPs";
+        }
+    }
+
+    private NetConnection Enrich(NetConnection c)
+    {
+        if (c.Scope == AddressScope.Public && c.RemoteAddress.Length > 0)
+            RequestGeo(c.RemoteAddress);
+        _geo.TryGetValue(c.RemoteAddress, out var geo);
+        _bwByConn.TryGetValue(c.Key, out var rates);
+        return new NetConnection
+        {
+            Protocol = c.Protocol,
+            State = c.State,
+            Pid = c.Pid,
+            ProcessName = c.ProcessName,
+            ProcessPath = c.ProcessPath,
+            Icon = c.Icon,
+            LocalAddress = c.LocalAddress,
+            LocalPort = c.LocalPort,
+            RemoteAddress = c.RemoteAddress,
+            RemotePort = c.RemotePort,
+            HostName = c.HostName,
+            Scope = c.Scope,
+            Flag = Format.FlagEmoji(geo?.CountryCode),
+            CountryCode = geo?.CountryCode ?? "",
+            FlagImage = FlagImages.Get(geo?.CountryCode),
+            GeoText = geo?.Display ?? "",
+            DownBps = rates.DownBps,
+            UpBps = rates.UpBps
+        };
     }
 
     private void SyncAdapters(IReadOnlyList<AdapterRate> rates)

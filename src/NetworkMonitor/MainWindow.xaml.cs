@@ -11,12 +11,14 @@ namespace NetworkMonitor;
 public partial class MainWindow : Window
 {
     private bool _forceClose;
+    private DnsWindow? _dns;
 
     public MainWindow()
     {
         InitializeComponent();
         DataContext = AppState.Current;
         Closing += OnClosing;
+        AppState.Current.ThemeChanged += ApplyCaptionTheme;
     }
 
     public void RestoreFromTray()
@@ -38,8 +40,11 @@ public partial class MainWindow : Window
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
-        NetworkMonitor.Native.NativeWindow.ApplyCaptionTheme(this, dark: true);
+        ApplyCaptionTheme();
     }
+
+    private void ApplyCaptionTheme()
+        => NetworkMonitor.Native.NativeWindow.ApplyCaptionTheme(this, dark: !AppState.Current.IsLightTheme);
 
     private void OnClosing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
@@ -57,6 +62,28 @@ public partial class MainWindow : Window
     {
         Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
         e.Handled = true;
+    }
+
+    private void CopyIp_MouseUp(object sender, MouseButtonEventArgs e)
+    {
+        var ip = (sender as FrameworkElement)?.Tag as string;
+        if (string.IsNullOrWhiteSpace(ip) || ip is "—" or "0.0.0.0" or "::")
+            return;
+        Clipboard.SetText(ip);
+        AppState.Current.FlashStatus("Copiado: " + ip);
+        e.Handled = true;
+    }
+
+    private void OpenDns_Click(object sender, RoutedEventArgs e)
+    {
+        if (_dns is { IsVisible: true })
+        {
+            _dns.Activate();
+            return;
+        }
+        _dns = new DnsWindow { Owner = this };
+        _dns.Closed += (_, _) => _dns = null;
+        _dns.Show();
     }
 
     private void ToggleOverlay_Click(object sender, RoutedEventArgs e)
@@ -177,13 +204,10 @@ public partial class MainWindow : Window
             ShowBlockResult(AppState.Current.RemoveBlock(rule));
     }
 
-    private async void RunDns_Click(object sender, RoutedEventArgs e)
-        => await AppState.Current.RunDnsTestAsync();
-
     private void RestartAdmin_Click(object sender, RoutedEventArgs e)
         => (System.Windows.Application.Current as App)?.RestartElevated();
 
-        private static void ShowBlockResult(string message)
+    private static void ShowBlockResult(string message)
     {
         var ok = message.StartsWith("Bloqueio aplicado", StringComparison.Ordinal)
               || message.StartsWith("Bloqueio removido", StringComparison.Ordinal);
@@ -191,17 +215,15 @@ public partial class MainWindow : Window
         System.Windows.MessageBox.Show(message, "Network Monitor", MessageBoxButton.OK, image);
     }
 
-    private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
+    private async void ApplyUpdate_Click(object sender, RoutedEventArgs e)
     {
         if (sender is System.Windows.Controls.Button btn)
-        {
             btn.IsEnabled = false;
-            try { await UpdateUi.CheckAndPromptAsync(quietWhenCurrent: false); }
-            finally { btn.IsEnabled = true; }
-        }
-        else
+        try { await UpdateUi.CheckAndPromptAsync(quietWhenCurrent: false); }
+        finally
         {
-            await UpdateUi.CheckAndPromptAsync(quietWhenCurrent: false);
+            if (sender is System.Windows.Controls.Button b)
+                b.IsEnabled = true;
         }
     }
 }

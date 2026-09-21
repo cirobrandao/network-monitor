@@ -106,3 +106,84 @@ public sealed class NullIconVisibilityConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         => Binding.DoNothing;
 }
+
+public sealed class NonEmptyVisibilityConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => string.IsNullOrWhiteSpace(value as string) ? Visibility.Collapsed : Visibility.Visible;
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => Binding.DoNothing;
+}
+
+public sealed class StateIconConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => (value as string) switch
+        {
+            "ESTABLISHED" => Glyphs.Established,
+            "LISTEN" => Glyphs.Listen,
+            "SYN_SENT" or "SYN_RECEIVED" => Glyphs.Connecting,
+            "FIN_WAIT_1" or "FIN_WAIT_2" or "CLOSE_WAIT" or "CLOSING" or "LAST_ACK" or "TIME_WAIT" or "CLOSED" => Glyphs.Closing,
+            "BIND" => Glyphs.LinkLocal,
+            _ => Glyphs.Unknown
+        };
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => Binding.DoNothing;
+}
+
+public sealed class StateBrushConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is "ESTABLISHED"
+            ? Brush("#0D7A5F")
+            : Brush("#8A94A0");
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => Binding.DoNothing;
+
+    private static SolidColorBrush Brush(string hex)
+    {
+        var color = (Color)ColorConverter.ConvertFromString(hex)!;
+        var brush = new SolidColorBrush(color);
+        brush.Freeze();
+        return brush;
+    }
+}
+
+public sealed class ScopeIconConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is AddressScope scope
+            ? scope switch
+            {
+                AddressScope.Public => Glyphs.Internet,
+                AddressScope.Private => Glyphs.Lan,
+                AddressScope.Loopback => Glyphs.Loopback,
+                AddressScope.LinkLocal => Glyphs.LinkLocal,
+                AddressScope.Multicast => Glyphs.Multicast,
+                _ => Glyphs.Unknown
+            }
+            : Glyphs.Unknown;
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => Binding.DoNothing;
+}
+
+public sealed class BlockedBrushConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => value is true ? Brush("#B42318") : Brush("#0F4C81");
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        => Binding.DoNothing;
+
+    private static SolidColorBrush Brush(string hex)
+    {
+        var color = (Color)ColorConverter.ConvertFromString(hex)!;
+        var brush = new SolidColorBrush(color);
+        brush.Freeze();
+        return brush;
+    }
+}

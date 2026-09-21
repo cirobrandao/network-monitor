@@ -3,6 +3,7 @@ using System.Drawing;
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
+using Microsoft.Win32;
 using NetworkMonitor.Native;
 using NetworkMonitor.Services;
 using Application = System.Windows.Application;
@@ -68,6 +69,8 @@ public partial class App : Application
         await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
         var state = AppState.Current;
         await Task.Run(state.Load);
+        Theme.Apply(state.Settings.Theme);
+        FlagImages.Changed += () => Dispatcher.Invoke(() => AppState.Current.RefreshViews());
         _main = new MainWindow();
         MainWindow = _main;
         _overlay = new OverlayWindow();
@@ -89,13 +92,13 @@ public partial class App : Application
         _ = Task.Run(() => RunLoopAsync(samplingToken));
         _publicIpCts = new CancellationTokenSource();
         _ = RunPublicIpLoopAsync(_publicIpCts.Token);
+        _ = RunUpdateLoopAsync(_publicIpCts.Token);
 
-        // Auto-update: silent unless a newer GitHub Release exists
-        _ = Dispatcher.InvokeAsync(async () =>
+        SystemEvents.UserPreferenceChanged += (_, args) =>
         {
-            try { await UpdateUi.CheckAndPromptAsync(quietWhenCurrent: true); }
-            catch { /* ignore startup update errors */ }
-        });
+            if (args.Category is UserPreferenceCategory.General or UserPreferenceCategory.VisualStyle)
+                Dispatcher.Invoke(() => AppState.Current.ApplySystemThemeIfNeeded());
+        };
     }
 
     public void ShowMainWindow() => _main?.RestoreFromTray();
@@ -166,6 +169,36 @@ public partial class App : Application
         _ = Task.Run(() => RunLoopAsync(token));
     }
 
+    private async Task RunUpdateLoopAsync(CancellationToken token)
+    {
+        try
+        {
+            while (!token.IsCancellationRequested)
+            {
+                try
+                {
+                    var result = await new UpdateService().CheckAsync(token);
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        if (result.Ok && result.IsUpdateAvailable)
+                            AppState.Current.SetUpdateAvailable(result.LatestVersion?.ToString());
+                        else
+                            AppState.Current.SetUpdateAvailable(null);
+                    });
+                }
+                catch
+                {
+                    // keep quiet — the footer only appears when a version is confirmed
+                }
+
+                await Task.Delay(TimeSpan.FromHours(6), token);
+            }
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+        }
+    }
+
     private async Task RunPublicIpLoopAsync(CancellationToken token)
     {
         try
@@ -195,7 +228,7 @@ public partial class App : Application
                 var settings = AppState.Current.Settings;
                 var bandwidth = _bandwidth.Capture(settings.DisabledAdapters);
                 var raw = IpHelper.GetAll(settings.ShowUdp);
-                var topBw = _processBw.Sample(raw, 5);
+                var traffic = _processBw.Sample(raw, 8);
                 var mapped = new List<(Native.RawConnection Row, ProcessInfo Process, AddressScope Scope, string? Host)>(raw.Count);
                 foreach (var row in raw)
                 {
@@ -231,8 +264,7 @@ public partial class App : Application
                             Scope = item.Scope
                         });
                     }
-                    AppState.Current.ApplySnapshot(bandwidth, connections);
-                    AppState.Current.SetProcessBandwidth(topBw);
+                    AppState.Current.ApplySnapshot(bandwidth, connections, traffic);
                 });
             }
             catch

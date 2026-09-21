@@ -5,6 +5,20 @@ using NetworkMonitor.Native;
 
 namespace NetworkMonitor.Services;
 
+internal readonly struct Rates
+{
+    public Rates(double downBps, double upBps)
+    {
+        DownBps = downBps;
+        UpBps = upBps;
+    }
+
+    public double DownBps { get; }
+    public double UpBps { get; }
+
+    public Rates Add(Rates other) => new(DownBps + other.DownBps, UpBps + other.UpBps);
+}
+
 internal sealed class ProcessBandwidthRow
 {
     public required int Pid { get; init; }
@@ -16,6 +30,22 @@ internal sealed class ProcessBandwidthRow
     public string Label => $"{Name}  {DownText}\u2193  {UpText}\u2191";
 }
 
+internal sealed class TrafficSnapshot
+{
+    public static TrafficSnapshot Empty { get; } = new()
+    {
+        ByConnection = new Dictionary<string, Rates>(),
+        ByPid = new Dictionary<int, Rates>(),
+        ByRemote = new Dictionary<string, Rates>(StringComparer.OrdinalIgnoreCase),
+        TopProcesses = []
+    };
+
+    public required IReadOnlyDictionary<string, Rates> ByConnection { get; init; }
+    public required IReadOnlyDictionary<int, Rates> ByPid { get; init; }
+    public required IReadOnlyDictionary<string, Rates> ByRemote { get; init; }
+    public required IReadOnlyList<ProcessBandwidthRow> TopProcesses { get; init; }
+}
+
 internal sealed class ProcessBandwidthService
 {
     private readonly Dictionary<string, (ulong Out, ulong In, long Ticks)> _last = new(StringComparer.Ordinal);
@@ -23,13 +53,15 @@ internal sealed class ProcessBandwidthService
 
     public bool IsAvailable => !_disabled;
 
-    public IReadOnlyList<ProcessBandwidthRow> Sample(IEnumerable<RawConnection> connections, int top = 5)
+    public TrafficSnapshot Sample(IEnumerable<RawConnection> connections, int top = 5)
     {
         if (_disabled)
-            return Array.Empty<ProcessBandwidthRow>();
+            return TrafficSnapshot.Empty;
 
         var now = Stopwatch.GetTimestamp();
-        var perPid = new Dictionary<int, (double Down, double Up)>();
+        var byConn = new Dictionary<string, Rates>(StringComparer.Ordinal);
+        var byPid = new Dictionary<int, Rates>();
+        var byRemote = new Dictionary<string, Rates>(StringComparer.OrdinalIgnoreCase);
         var attempts = 0;
         var failures = 0;
 
@@ -49,9 +81,9 @@ internal sealed class ProcessBandwidthService
                 continue;
             }
 
-            var key = $"{c.Pid}|{c.LocalAddress}|{c.LocalPort}|{c.RemoteAddress}|{c.RemotePort}";
+            var sampleKey = $"{c.Pid}|{c.LocalAddress}|{c.LocalPort}|{c.RemoteAddress}|{c.RemotePort}";
             double down = 0, up = 0;
-            if (_last.TryGetValue(key, out var prev))
+            if (_last.TryGetValue(sampleKey, out var prev))
             {
                 var dt = (now - prev.Ticks) / (double)Stopwatch.Frequency;
                 if (dt > 0.05)
@@ -60,11 +92,14 @@ internal sealed class ProcessBandwidthService
                     down = Math.Max(0, (long)(dataIn - prev.In)) / dt;
                 }
             }
-            _last[key] = (dataOut, dataIn, now);
+            _last[sampleKey] = (dataOut, dataIn, now);
 
-            if (!perPid.TryGetValue(c.Pid, out var agg))
-                agg = (0, 0);
-            perPid[c.Pid] = (agg.Down + down, agg.Up + up);
+            var rates = new Rates(down, up);
+            var connKey = $"{c.Protocol}|{c.Pid}|{c.LocalAddress}:{c.LocalPort}|{c.RemoteAddress}:{c.RemotePort}";
+            byConn[connKey] = rates;
+
+            byPid[c.Pid] = byPid.TryGetValue(c.Pid, out var pidRates) ? pidRates.Add(rates) : rates;
+            byRemote[c.RemoteAddress] = byRemote.TryGetValue(c.RemoteAddress, out var ipRates) ? ipRates.Add(rates) : rates;
         }
 
         if (attempts > 8 && failures == attempts)
@@ -73,8 +108,8 @@ internal sealed class ProcessBandwidthService
         if (_last.Count > 4000)
             _last.Clear();
 
-        var rows = new List<ProcessBandwidthRow>();
-        foreach (var (pid, rates) in perPid)
+        var rows = new List<ProcessBandwidthRow>(byPid.Count);
+        foreach (var (pid, rates) in byPid)
         {
             string name;
             try
@@ -91,16 +126,22 @@ internal sealed class ProcessBandwidthService
             {
                 Pid = pid,
                 Name = name,
-                DownBps = rates.Down,
-                UpBps = rates.Up
+                DownBps = rates.DownBps,
+                UpBps = rates.UpBps
             });
         }
 
-        return rows
-            .OrderByDescending(r => r.DownBps + r.UpBps)
-            .Take(Math.Max(1, top))
-            .Where(r => r.DownBps + r.UpBps > 256)
-            .ToList();
+        return new TrafficSnapshot
+        {
+            ByConnection = byConn,
+            ByPid = byPid,
+            ByRemote = byRemote,
+            TopProcesses = rows
+                .OrderByDescending(r => r.DownBps + r.UpBps)
+                .Take(Math.Max(1, top))
+                .Where(r => r.DownBps + r.UpBps > 256)
+                .ToList()
+        };
     }
 
     private bool TryReadData(RawConnection c, out ulong dataOut, out ulong dataIn)

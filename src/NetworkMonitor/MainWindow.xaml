@@ -6,8 +6,8 @@
         Height="760" Width="1180"
         MinHeight="560"
         MinWidth="880"
-        Background="{StaticResource BgBrush}"
-        Foreground="{StaticResource TextBrush}"
+        Background="{DynamicResource BgBrush}"
+        Foreground="{DynamicResource TextBrush}"
         FontFamily="{StaticResource UiFont}"
         WindowStartupLocation="CenterScreen">
   <Window.DataContext>
@@ -24,7 +24,7 @@
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
-    <Border Grid.Row="0" Padding="16,12" Background="{StaticResource HeaderBrush}">
+    <Border Grid.Row="0" Padding="16,12" Background="{DynamicResource HeaderBrush}">
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
@@ -34,13 +34,10 @@
 
         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
           <Image Source="pack://application:,,,/Assets/app.png" Width="22" Height="22" Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality" />
-          <StackPanel>
-            <TextBlock Text="NETWORK MONITOR" FontSize="13" FontWeight="SemiBold" Foreground="White" />
-            <TextBlock FontSize="11" Foreground="#B8C5D1"
-                       Visibility="{Binding ShowPublicIp, Converter={StaticResource BoolToVis}}">
-              <Run Text="IP externo  " />
-              <Run Text="{Binding PublicIp, Mode=OneWay}" FontFamily="{StaticResource MonoFont}" />
-            </TextBlock>
+          <StackPanel Visibility="{Binding ShowPublicIp, Converter={StaticResource BoolToVis}}">
+            <TextBlock Text="IP EXTERNO" FontSize="10" Foreground="#8FD4C0" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding PublicIp}" Style="{StaticResource IpText}" Tag="{Binding PublicIp}"
+                       MouseLeftButtonUp="CopyIp_MouseUp" Foreground="White" FontSize="16" FontWeight="SemiBold" />
           </StackPanel>
         </StackPanel>
 
@@ -59,19 +56,21 @@
 
         <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
           <Button Style="{StaticResource HeaderButton}" Content="Widget" Click="ToggleOverlay_Click" Margin="0,0,8,0" />
+          <Button Style="{StaticResource HeaderButton}" Content="Teste DNS" Click="OpenDns_Click" Margin="0,0,8,0" />
           <Button Style="{StaticResource HeaderButton}" Content="Exportar" Click="Export_Click" Margin="0,0,8,0" />
-          <Button Style="{StaticResource GhostButton}" Content="Atualizar" Click="CheckUpdates_Click" Margin="0,0,8,0" ToolTip="Verificar atualizacoes no GitHub" />
           <Button Style="{StaticResource AccentButton}" Content="Ajustes" Click="OpenSettings_Click" />
         </StackPanel>
       </Grid>
     </Border>
 
-    <Border Grid.Row="1" Padding="16,8" Background="#FEF3F2" BorderBrush="#F5C2C0" BorderThickness="0,0,0,1"
+    <Border Grid.Row="1" Padding="16,8" Background="{DynamicResource PeakBannerBrush}"
+            BorderBrush="{DynamicResource PeakBannerBorderBrush}" BorderThickness="0,0,0,1"
             Visibility="{Binding IsPeaking, Converter={StaticResource BoolToVis}}">
-      <TextBlock Text="{Binding PeakText}" Foreground="{StaticResource PeakBrush}" FontWeight="SemiBold" />
+      <TextBlock Text="{Binding PeakText}" Foreground="{DynamicResource PeakBrush}" FontWeight="SemiBold" />
     </Border>
 
-    <Border Grid.Row="2" Padding="16,10" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+    <Border Grid.Row="2" Padding="16,10" Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
       <Grid>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
@@ -80,7 +79,7 @@
         <Grid>
           <TextBox Text="{Binding Search, UpdateSourceTrigger=PropertyChanged}" />
           <TextBlock Text="Filtrar por aplicativo, IP, host ou PID"
-                     Foreground="{StaticResource MutedBrush}"
+                     Foreground="{DynamicResource MutedBrush}"
                      IsHitTestVisible="False"
                      Margin="10,6,0,0"
                      VerticalAlignment="Center">
@@ -96,7 +95,8 @@
             </TextBlock.Style>
           </TextBlock>
         </Grid>
-        <Border Grid.Column="1" Margin="12,0,0,0" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="2">
+        <Border Grid.Column="1" Margin="12,0,0,0" Background="{DynamicResource Surface2Brush}"
+                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="2">
           <StackPanel Orientation="Horizontal">
             <RadioButton Style="{StaticResource Segment}" Content="Aplicativos"
                          IsChecked="{Binding ViewMode, Converter={StaticResource EnumToBool}, ConverterParameter=Processes}" />
@@ -106,18 +106,17 @@
                          IsChecked="{Binding ViewMode, Converter={StaticResource EnumToBool}, ConverterParameter=Connections}" />
             <RadioButton Style="{StaticResource Segment}" Content="Encerradas"
                          IsChecked="{Binding ViewMode, Converter={StaticResource EnumToBool}, ConverterParameter=Closed}" />
-            <RadioButton Style="{StaticResource Segment}" Content="DNS"
-                         IsChecked="{Binding ViewMode, Converter={StaticResource EnumToBool}, ConverterParameter=Dns}" />
           </StackPanel>
         </Border>
       </Grid>
     </Border>
 
-    <Border Grid.Row="3" Margin="12,0,12,0" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+    <Border Grid.Row="3" Margin="12,0,12,0" Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1"
             Visibility="{Binding ShowChart, Converter={StaticResource BoolToVis}}">
       <DockPanel LastChildFill="True">
         <Grid DockPanel.Dock="Top" Margin="10,8,10,4">
-          <TextBlock Text="TRÁFEGO" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
+          <TextBlock Text="TRÁFEGO" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
           <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
             <RadioButton Style="{StaticResource Segment}" Content="Linha" IsChecked="{Binding ChartLine}" />
             <RadioButton Style="{StaticResource Segment}" Content="Área" IsChecked="{Binding ChartArea}" />
@@ -134,7 +133,8 @@
         <ItemsControl ItemsSource="{Binding Processes}">
           <ItemsControl.ItemTemplate>
             <DataTemplate>
-              <Border Margin="0,0,0,1" Padding="10,8" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+              <Border Margin="0,0,0,1" Padding="10,8" Background="{DynamicResource SurfaceBrush}"
+                      BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                 <StackPanel>
                   <Grid>
                     <Grid.ColumnDefinitions>
@@ -142,24 +142,29 @@
                       <ColumnDefinition Width="Auto" />
                       <ColumnDefinition Width="*" />
                       <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <ToggleButton Style="{StaticResource ChevronToggle}" IsChecked="{Binding IsExpanded, Mode=TwoWay}" />
                     <Grid Grid.Column="1" Width="22" Height="22" Margin="0,0,10,0">
                       <Image Source="{Binding Icon}" Width="16" Height="16" Stretch="Uniform" />
-                      <Border Background="#E8ECF0" Visibility="{Binding Icon, Converter={StaticResource NullIcon}}">
-                        <TextBlock Text="•" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{StaticResource MutedBrush}" />
+                      <Border Background="{DynamicResource Surface2Brush}" Visibility="{Binding Icon, Converter={StaticResource NullIcon}}">
+                        <TextBlock Text="•" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{DynamicResource MutedBrush}" />
                       </Border>
                     </Grid>
                     <StackPanel Grid.Column="2" VerticalAlignment="Center">
                       <TextBlock Text="{Binding Name}" FontWeight="SemiBold" FontSize="13" />
-                      <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="11">
+                      <TextBlock Foreground="{DynamicResource MutedBrush}" FontSize="11">
                         <Run Text="{Binding PidSummary, Mode=OneWay}" />
                         <Run Text=" · " />
                         <Run Text="{Binding CountLabel, Mode=OneWay}" />
                       </TextBlock>
                     </StackPanel>
-                    <Button Grid.Column="3" Style="{StaticResource BlockButton}" Content="{Binding BlockLabel}"
-                            Click="BlockProcess_Click" Tag="{Binding}" />
+                    <TextBlock Grid.Column="3" Text="{Binding RateText}" FontFamily="{StaticResource MonoFont}"
+                               FontSize="12" VerticalAlignment="Center" Margin="12,0,0,0" />
+                    <Button Grid.Column="4" Style="{StaticResource IconToolButton}" ToolTip="{Binding BlockLabel}"
+                            Click="BlockProcess_Click" Tag="{Binding}" Foreground="{Binding IsBlocked, Converter={StaticResource BlockedBrush}}">
+                      <TextBlock Style="{StaticResource Glyph}" Text="{Binding BlockGlyph}" />
+                    </Button>
                   </Grid>
                   <ItemsControl ItemsSource="{Binding Connections}" Margin="38,8,0,0"
                                 Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
@@ -167,20 +172,34 @@
                       <DataTemplate>
                         <Grid Margin="0,4">
                           <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="70" />
-                            <ColumnDefinition Width="220" />
+                            <ColumnDefinition Width="48" />
+                            <ColumnDefinition Width="22" />
+                            <ColumnDefinition Width="210" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="140" />
-                            <ColumnDefinition Width="110" />
+                            <ColumnDefinition Width="130" />
+                            <ColumnDefinition Width="28" />
+                            <ColumnDefinition Width="28" />
                             <ColumnDefinition Width="Auto" />
                           </Grid.ColumnDefinitions>
-                          <TextBlock Text="{Binding ProtocolText}" Foreground="{StaticResource MutedBrush}" />
-                          <TextBlock Grid.Column="1" Text="{Binding RemoteDisplay}" FontFamily="{StaticResource MonoFont}" />
-                          <TextBlock Grid.Column="2" Text="{Binding HostDisplay}" Foreground="{StaticResource MutedBrush}" TextTrimming="CharacterEllipsis" />
-                          <TextBlock Grid.Column="3" Text="{Binding State, Converter={StaticResource State}}" />
-                          <TextBlock Grid.Column="4" Text="{Binding Scope, Converter={StaticResource Scope}}" Foreground="{Binding Scope, Converter={StaticResource ScopeBrush}}" />
-                          <Button Grid.Column="5" Style="{StaticResource BlockButton}" Content="Bloquear IP"
-                                  Click="BlockConnectionIp_Click" Tag="{Binding}" />
+                          <TextBlock Text="{Binding ProtocolText}" Foreground="{DynamicResource MutedBrush}" />
+                          <Image Grid.Column="1" Source="{Binding FlagImage}" Width="18" Height="12" Stretch="Uniform"
+                                 RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center"
+                                 ToolTip="{Binding GeoText}"
+                                 Visibility="{Binding CountryCode, Converter={StaticResource NonEmptyVis}}" />
+                          <TextBlock Grid.Column="2" Text="{Binding RemoteDisplay}" Style="{StaticResource IpText}"
+                                     Tag="{Binding RemoteAddress}" MouseLeftButtonUp="CopyIp_MouseUp" />
+                          <TextBlock Grid.Column="3" Text="{Binding HostDisplay}" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" />
+                          <TextBlock Grid.Column="4" Text="{Binding RateText}" FontFamily="{StaticResource MonoFont}" FontSize="11" />
+                          <TextBlock Grid.Column="5" Style="{StaticResource Glyph}" Text="{Binding State, Converter={StaticResource StateIcon}}"
+                                     Foreground="{Binding State, Converter={StaticResource StateBrush}}"
+                                     ToolTip="{Binding State, Converter={StaticResource State}}" />
+                          <TextBlock Grid.Column="6" Style="{StaticResource Glyph}" Text="{Binding Scope, Converter={StaticResource ScopeIcon}}"
+                                     Foreground="{Binding Scope, Converter={StaticResource ScopeBrush}}"
+                                     ToolTip="{Binding Scope, Converter={StaticResource Scope}}" />
+                          <Button Grid.Column="7" Style="{StaticResource IconToolButton}" ToolTip="Bloquear IP"
+                                  Click="BlockConnectionIp_Click" Tag="{Binding}">
+                            <TextBlock Style="{StaticResource Glyph}" Text="&#xF140;" />
+                          </Button>
                         </Grid>
                       </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -197,27 +216,34 @@
         <ItemsControl ItemsSource="{Binding Addresses}">
           <ItemsControl.ItemTemplate>
             <DataTemplate>
-              <Border Margin="0,0,0,1" Padding="10,8" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+              <Border Margin="0,0,0,1" Padding="10,8" Background="{DynamicResource SurfaceBrush}"
+                      BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
                 <StackPanel>
                   <Grid>
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="Auto" />
                       <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
                       <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <ToggleButton Style="{StaticResource ChevronToggle}" IsChecked="{Binding IsExpanded, Mode=TwoWay}" />
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                      <TextBlock Text="{Binding Address}" FontFamily="{StaticResource MonoFont}" FontSize="14" FontWeight="SemiBold" />
-                      <TextBlock Foreground="{StaticResource MutedBrush}" FontSize="12">
-                        <Run Text="{Binding HostDisplay, Mode=OneWay}" />
-                        <Run Text=" · " />
-                        <Run Text="{Binding Scope, Converter={StaticResource Scope}, Mode=OneWay}" />
-                        <Run Text=" · " />
-                        <Run Text="{Binding CountLabel, Mode=OneWay}" />
-                      </TextBlock>
+                    <Image Grid.Column="1" Source="{Binding FlagImage}" Width="22" Height="15" Stretch="Uniform"
+                           Margin="0,0,8,0" VerticalAlignment="Center"
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           ToolTip="{Binding GeoText}"
+                           Visibility="{Binding CountryCode, Converter={StaticResource NonEmptyVis}}" />
+                    <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                      <TextBlock Text="{Binding Address}" Style="{StaticResource IpText}" FontSize="14" FontWeight="SemiBold"
+                                 Tag="{Binding Address}" MouseLeftButtonUp="CopyIp_MouseUp" />
+                      <TextBlock Text="{Binding Subtitle}" Foreground="{DynamicResource MutedBrush}" FontSize="12" TextTrimming="CharacterEllipsis" />
                     </StackPanel>
-                    <Button Grid.Column="2" Style="{StaticResource BlockButton}" Content="{Binding BlockLabel}"
-                            Click="BlockIp_Click" Tag="{Binding}" />
+                    <TextBlock Grid.Column="3" Text="{Binding RateText}" FontFamily="{StaticResource MonoFont}"
+                               FontSize="12" VerticalAlignment="Center" Margin="12,0,0,0" />
+                    <Button Grid.Column="4" Style="{StaticResource IconToolButton}" ToolTip="{Binding BlockLabel}"
+                            Click="BlockIp_Click" Tag="{Binding}" Foreground="{Binding IsBlocked, Converter={StaticResource BlockedBrush}}">
+                      <TextBlock Style="{StaticResource Glyph}" Text="{Binding BlockGlyph}" />
+                    </Button>
                   </Grid>
                   <ItemsControl ItemsSource="{Binding Connections}" Margin="38,8,0,0"
                                 Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVis}}">
@@ -227,16 +253,22 @@
                           <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="220" />
-                            <ColumnDefinition Width="140" />
+                            <ColumnDefinition Width="200" />
+                            <ColumnDefinition Width="130" />
+                            <ColumnDefinition Width="28" />
                             <ColumnDefinition Width="Auto" />
                           </Grid.ColumnDefinitions>
                           <Image Source="{Binding Icon}" Width="14" Height="14" Margin="0,0,8,0" />
                           <TextBlock Grid.Column="1" Text="{Binding ProcessName}" />
-                          <TextBlock Grid.Column="2" Text="{Binding LocalDisplay}" FontFamily="{StaticResource MonoFont}" Foreground="{StaticResource MutedBrush}" />
-                          <TextBlock Grid.Column="3" Text="{Binding State, Converter={StaticResource State}}" />
-                          <Button Grid.Column="4" Style="{StaticResource BlockButton}" Content="Bloquear app"
-                                  Click="BlockConnectionApp_Click" Tag="{Binding}" />
+                          <TextBlock Grid.Column="2" Text="{Binding LocalDisplay}" FontFamily="{StaticResource MonoFont}" Foreground="{DynamicResource MutedBrush}" />
+                          <TextBlock Grid.Column="3" Text="{Binding RateText}" FontFamily="{StaticResource MonoFont}" FontSize="11" />
+                          <TextBlock Grid.Column="4" Style="{StaticResource Glyph}" Text="{Binding State, Converter={StaticResource StateIcon}}"
+                                     Foreground="{Binding State, Converter={StaticResource StateBrush}}"
+                                     ToolTip="{Binding State, Converter={StaticResource State}}" />
+                          <Button Grid.Column="5" Style="{StaticResource IconToolButton}" ToolTip="Bloquear aplicativo"
+                                  Click="BlockConnectionApp_Click" Tag="{Binding}">
+                            <TextBlock Style="{StaticResource Glyph}" Text="&#xF140;" />
+                          </Button>
                         </Grid>
                       </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -251,23 +283,24 @@
       <DockPanel Visibility="{Binding ViewMode, Converter={StaticResource EnumToVis}, ConverterParameter=Connections}">
         <Grid DockPanel.Dock="Top" Margin="8,0,8,8">
           <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2.1*" />
-            <ColumnDefinition Width="70" />
-            <ColumnDefinition Width="70" />
-            <ColumnDefinition Width="1.6*" />
             <ColumnDefinition Width="1.8*" />
-            <ColumnDefinition Width="1.6*" />
+            <ColumnDefinition Width="56" />
+            <ColumnDefinition Width="48" />
+            <ColumnDefinition Width="1.4*" />
+            <ColumnDefinition Width="22" />
+            <ColumnDefinition Width="1.7*" />
+            <ColumnDefinition Width="1.3*" />
             <ColumnDefinition Width="120" />
-            <ColumnDefinition Width="110" />
+            <ColumnDefinition Width="28" />
+            <ColumnDefinition Width="28" />
           </Grid.ColumnDefinitions>
-          <TextBlock Text="Aplicativo" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="1" Text="PID" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="2" Text="Proto" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="3" Text="Local" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="4" Text="Remoto" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="5" Text="Host" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="6" Text="Estado" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="7" Text="Escopo" Foreground="{StaticResource MutedBrush}" FontSize="12" />
+          <TextBlock Text="Aplicativo" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="1" Text="PID" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="2" Text="Proto" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="3" Text="Local" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="5" Text="Remoto" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="6" Text="Host" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="7" Text="Velocidade" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
         </Grid>
         <ListView x:Name="ConnectionsList" ItemsSource="{Binding Connections}"
                   Background="Transparent"
@@ -279,19 +312,19 @@
           <ListView.ItemContainerStyle>
             <Style TargetType="ListViewItem">
               <Setter Property="Background" Value="Transparent" />
-              <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+              <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
               <Setter Property="HorizontalContentAlignment" Value="Stretch" />
               <Setter Property="Padding" Value="0" />
               <Setter Property="Margin" Value="0,0,0,1" />
               <Setter Property="Template">
                 <Setter.Value>
                   <ControlTemplate TargetType="ListViewItem">
-                    <Border x:Name="bd" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="8,6">
+                    <Border x:Name="bd" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="8,6">
                       <ContentPresenter />
                     </Border>
                     <ControlTemplate.Triggers>
                       <Trigger Property="IsMouseOver" Value="True">
-                        <Setter TargetName="bd" Property="Background" Value="#EEF3F8" />
+                        <Setter TargetName="bd" Property="Background" Value="{DynamicResource RowHoverBrush}" />
                       </Trigger>
                     </ControlTemplate.Triggers>
                   </ControlTemplate>
@@ -303,26 +336,39 @@
             <DataTemplate>
               <Grid>
                 <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="2.1*" />
-                  <ColumnDefinition Width="70" />
-                  <ColumnDefinition Width="70" />
-                  <ColumnDefinition Width="1.6*" />
                   <ColumnDefinition Width="1.8*" />
-                  <ColumnDefinition Width="1.6*" />
+                  <ColumnDefinition Width="56" />
+                  <ColumnDefinition Width="48" />
+                  <ColumnDefinition Width="1.4*" />
+                  <ColumnDefinition Width="22" />
+                  <ColumnDefinition Width="1.7*" />
+                  <ColumnDefinition Width="1.3*" />
                   <ColumnDefinition Width="120" />
-                  <ColumnDefinition Width="110" />
+                  <ColumnDefinition Width="28" />
+                  <ColumnDefinition Width="28" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal">
                   <Image Source="{Binding Icon}" Width="14" Height="14" Margin="0,0,8,0" />
                   <TextBlock Text="{Binding ProcessName}" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
-                <TextBlock Grid.Column="1" Text="{Binding Pid}" Foreground="{StaticResource MutedBrush}" />
+                <TextBlock Grid.Column="1" Text="{Binding Pid}" Foreground="{DynamicResource MutedBrush}" />
                 <TextBlock Grid.Column="2" Text="{Binding ProtocolText}" />
-                <TextBlock Grid.Column="3" Text="{Binding LocalDisplay}" FontFamily="{StaticResource MonoFont}" FontSize="12" />
-                <TextBlock Grid.Column="4" Text="{Binding RemoteDisplay}" FontFamily="{StaticResource MonoFont}" FontSize="12" />
-                <TextBlock Grid.Column="5" Text="{Binding HostDisplay}" Foreground="{StaticResource MutedBrush}" TextTrimming="CharacterEllipsis" />
-                <TextBlock Grid.Column="6" Text="{Binding State, Converter={StaticResource State}}" />
-                <TextBlock Grid.Column="7" Text="{Binding Scope, Converter={StaticResource Scope}}" Foreground="{Binding Scope, Converter={StaticResource ScopeBrush}}" />
+                <TextBlock Grid.Column="3" Text="{Binding LocalDisplay}" Style="{StaticResource IpText}" FontSize="12"
+                           Tag="{Binding LocalAddress}" MouseLeftButtonUp="CopyIp_MouseUp" />
+                <Image Grid.Column="4" Source="{Binding FlagImage}" Width="18" Height="12" Stretch="Uniform"
+                       RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center"
+                       ToolTip="{Binding GeoText}"
+                       Visibility="{Binding CountryCode, Converter={StaticResource NonEmptyVis}}" />
+                <TextBlock Grid.Column="5" Text="{Binding RemoteDisplay}" Style="{StaticResource IpText}" FontSize="12"
+                           Tag="{Binding RemoteAddress}" MouseLeftButtonUp="CopyIp_MouseUp" />
+                <TextBlock Grid.Column="6" Text="{Binding HostDisplay}" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="7" Text="{Binding RateText}" FontFamily="{StaticResource MonoFont}" FontSize="11" />
+                <TextBlock Grid.Column="8" Style="{StaticResource Glyph}" Text="{Binding State, Converter={StaticResource StateIcon}}"
+                           Foreground="{Binding State, Converter={StaticResource StateBrush}}"
+                           ToolTip="{Binding State, Converter={StaticResource State}}" />
+                <TextBlock Grid.Column="9" Style="{StaticResource Glyph}" Text="{Binding Scope, Converter={StaticResource ScopeIcon}}"
+                           Foreground="{Binding Scope, Converter={StaticResource ScopeBrush}}"
+                           ToolTip="{Binding Scope, Converter={StaticResource Scope}}" />
               </Grid>
             </DataTemplate>
           </ListView.ItemTemplate>
@@ -345,19 +391,20 @@
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="1.8*" />
             <ColumnDefinition Width="70" />
+            <ColumnDefinition Width="22" />
             <ColumnDefinition Width="1.8*" />
             <ColumnDefinition Width="1.4*" />
             <ColumnDefinition Width="90" />
             <ColumnDefinition Width="80" />
             <ColumnDefinition Width="80" />
           </Grid.ColumnDefinitions>
-          <TextBlock Text="Aplicativo" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="1" Text="PID" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="2" Text="Remoto" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="3" Text="Host" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="4" Text="Encerrou" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="5" Text="Durou" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-          <TextBlock Grid.Column="6" Text="Há" Foreground="{StaticResource MutedBrush}" FontSize="12" />
+          <TextBlock Text="Aplicativo" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="1" Text="PID" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="3" Text="Remoto" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="4" Text="Host" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="5" Text="Encerrou" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="6" Text="Durou" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+          <TextBlock Grid.Column="7" Text="Há" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
         </Grid>
         <ListView ItemsSource="{Binding ClosedConnections}"
                   Background="Transparent"
@@ -372,7 +419,7 @@
               <Setter Property="Template">
                 <Setter.Value>
                   <ControlTemplate TargetType="ListViewItem">
-                    <Border Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="8,6">
+                    <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" Padding="8,6">
                       <ContentPresenter />
                     </Border>
                   </ControlTemplate>
@@ -386,6 +433,7 @@
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="1.8*" />
                   <ColumnDefinition Width="70" />
+                  <ColumnDefinition Width="22" />
                   <ColumnDefinition Width="1.8*" />
                   <ColumnDefinition Width="1.4*" />
                   <ColumnDefinition Width="90" />
@@ -396,115 +444,46 @@
                   <Image Source="{Binding Icon}" Width="14" Height="14" Margin="0,0,8,0" />
                   <TextBlock Text="{Binding ProcessName}" TextTrimming="CharacterEllipsis" />
                 </StackPanel>
-                <TextBlock Grid.Column="1" Text="{Binding Pid}" Foreground="{StaticResource MutedBrush}" />
-                <TextBlock Grid.Column="2" Text="{Binding RemoteDisplay}" FontFamily="{StaticResource MonoFont}" FontSize="12" />
-                <TextBlock Grid.Column="3" Text="{Binding HostDisplay}" Foreground="{StaticResource MutedBrush}" TextTrimming="CharacterEllipsis" />
-                <TextBlock Grid.Column="4" Text="{Binding EndedLabel}" />
-                <TextBlock Grid.Column="5" Text="{Binding DurationLabel}" Foreground="{StaticResource MutedBrush}" />
-                <TextBlock Grid.Column="6" Text="{Binding AgoLabel}" Foreground="{StaticResource MutedBrush}" />
+                <TextBlock Grid.Column="1" Text="{Binding Pid}" Foreground="{DynamicResource MutedBrush}" />
+                <Image Grid.Column="2" Source="{Binding FlagImage}" Width="18" Height="12" Stretch="Uniform"
+                       RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center"
+                       ToolTip="{Binding GeoText}"
+                       Visibility="{Binding CountryCode, Converter={StaticResource NonEmptyVis}}" />
+                <TextBlock Grid.Column="3" Text="{Binding RemoteDisplay}" Style="{StaticResource IpText}" FontSize="12"
+                           Tag="{Binding RemoteAddress}" MouseLeftButtonUp="CopyIp_MouseUp" />
+                <TextBlock Grid.Column="4" Text="{Binding HostDisplay}" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" />
+                <TextBlock Grid.Column="5" Text="{Binding EndedLabel}" />
+                <TextBlock Grid.Column="6" Text="{Binding DurationLabel}" Foreground="{DynamicResource MutedBrush}" />
+                <TextBlock Grid.Column="7" Text="{Binding AgoLabel}" Foreground="{DynamicResource MutedBrush}" />
               </Grid>
             </DataTemplate>
           </ListView.ItemTemplate>
         </ListView>
       </DockPanel>
-
-      <ScrollViewer Visibility="{Binding ViewMode, Converter={StaticResource EnumToVis}, ConverterParameter=Dns}"
-                    VerticalScrollBarVisibility="Auto">
-        <StackPanel>
-          <Border Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="14">
-            <StackPanel>
-              <TextBlock Text="Teste de DNS" FontSize="16" FontWeight="SemiBold" />
-              <TextBlock Text="Mede o tempo de resposta de servidores públicos e do DNS do sistema."
-                         Foreground="{StaticResource MutedBrush}" Margin="0,4,0,12" TextWrapping="Wrap" />
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBox Text="{Binding DnsHosts, UpdateSourceTrigger=PropertyChanged}" />
-                <Button Grid.Column="1" Style="{StaticResource AccentButton}" Content="Testar DNS"
-                        Margin="10,0,0,0" Click="RunDns_Click" IsEnabled="{Binding DnsIdle}" />
-              </Grid>
-              <TextBlock Text="{Binding DnsStatus}" Margin="0,10,0,0" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
-            </StackPanel>
-          </Border>
-          <ItemsControl ItemsSource="{Binding DnsResults}" Margin="0,10,0,0">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <Border Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="12,10" Margin="0,0,0,8">
-                  <Grid>
-                    <Grid.ColumnDefinitions>
-                      <ColumnDefinition Width="160" />
-                      <ColumnDefinition Width="120" />
-                      <ColumnDefinition Width="90" />
-                      <ColumnDefinition Width="70" />
-                      <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
-                    <TextBlock Grid.Column="1" Text="{Binding Address}" FontFamily="{StaticResource MonoFont}" />
-                    <TextBlock Grid.Column="2" Text="{Binding AverageText}" FontWeight="SemiBold" />
-                    <TextBlock Grid.Column="3" Text="{Binding Status}" />
-                    <TextBlock Grid.Column="4" Text="{Binding SamplesText}" Foreground="{StaticResource MutedBrush}" TextWrapping="Wrap" />
-                  </Grid>
-                </Border>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-
-          <Border Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" Padding="14" Margin="0,8,0,0">
-            <StackPanel>
-              <TextBlock Text="Bloqueios de internet" FontSize="16" FontWeight="SemiBold" />
-              <TextBlock Text="{Binding ElevationText}" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,10" TextWrapping="Wrap" />
-              <Button Style="{StaticResource GhostButton}" Content="Reiniciar como administrador"
-                      Click="RestartAdmin_Click" HorizontalAlignment="Left"
-                      Visibility="{Binding IsElevated, Converter={StaticResource BoolToVisInv}}" Margin="0,0,0,12" />
-              <ItemsControl ItemsSource="{Binding BlockRules}">
-                <ItemsControl.ItemTemplate>
-                  <DataTemplate>
-                    <Grid Margin="0,0,0,8">
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                      </Grid.ColumnDefinitions>
-                      <TextBlock Text="{Binding Label}" VerticalAlignment="Center" />
-                      <Button Grid.Column="1" Style="{StaticResource BlockButton}" Content="Remover"
-                              Click="RemoveBlock_Click" Tag="{Binding}" />
-                    </Grid>
-                  </DataTemplate>
-                </ItemsControl.ItemTemplate>
-              </ItemsControl>
-              <TextBlock Text="Nenhum bloqueio ativo." Foreground="{StaticResource MutedBrush}">
-                <TextBlock.Style>
-                  <Style TargetType="TextBlock">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                    <Style.Triggers>
-                      <DataTrigger Binding="{Binding BlockRules.Count}" Value="0">
-                        <Setter Property="Visibility" Value="Visible" />
-                      </DataTrigger>
-                    </Style.Triggers>
-                  </Style>
-                </TextBlock.Style>
-              </TextBlock>
-            </StackPanel>
-          </Border>
-        </StackPanel>
-      </ScrollViewer>
     </Grid>
 
-    <Border Grid.Row="5" Padding="16,8" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+    <Border Grid.Row="5" Padding="16,8" Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
       <Grid>
-        <TextBlock Text="{Binding StatusText}" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" />
-        <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="12">
-          <Hyperlink NavigateUri="https://cirobrandao.com.br/" RequestNavigate="Site_RequestNavigate">cirobrandao.com.br</Hyperlink>
-        </TextBlock>
+        <TextBlock Text="{Binding StatusText}" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+          <Button Style="{StaticResource GhostButton}" Padding="10,4" FontSize="12"
+                  Content="{Binding UpdateLabel}"
+                  Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVis}}"
+                  Click="ApplyUpdate_Click" Margin="0,0,14,0" ToolTip="Há uma versão nova no GitHub" />
+          <TextBlock FontSize="12" VerticalAlignment="Center">
+            <Hyperlink NavigateUri="https://cirobrandao.com.br/" RequestNavigate="Site_RequestNavigate">cirobrandao.com.br</Hyperlink>
+          </TextBlock>
+        </StackPanel>
       </Grid>
     </Border>
 
     <Grid Grid.RowSpan="6" Visibility="{Binding SettingsOpen, Converter={StaticResource BoolToVis}}">
       <Border Background="#66000000" MouseDown="CloseSettingsScrim_MouseDown" />
-      <Border HorizontalAlignment="Right" Width="380" Background="White" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1,0,0,0" Padding="20">
+      <Border HorizontalAlignment="Right" Width="400" Background="{DynamicResource SurfaceBrush}"
+              BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1,0,0,0" Padding="20">
         <DockPanel>
-          <DockPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+          <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
             <Button DockPanel.Dock="Right" Style="{StaticResource GhostButton}" Width="32" Height="32" Padding="0"
                     ToolTip="Fechar ajustes" AutomationProperties.Name="Fechar ajustes" Click="CloseSettings_Click">
               <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE711;" FontSize="12" />
@@ -514,79 +493,123 @@
           <ScrollViewer VerticalScrollBarVisibility="Auto">
           <StackPanel>
 
-            <TextBlock Text="Widget" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,8" />
+            <TextBlock Style="{StaticResource SettingsSection}" Text="Aparência" Margin="0,0,0,8" />
+            <TextBlock Style="{StaticResource SettingsHint}" Text="Aplica na janela e no widget." />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+              <RadioButton Style="{StaticResource Segment}" GroupName="AppTheme" Content="Cor do sistema" IsChecked="{Binding ThemeIsSystem}" />
+              <RadioButton Style="{StaticResource Segment}" GroupName="AppTheme" Content="Claro" IsChecked="{Binding ThemeIsLight}" />
+              <RadioButton Style="{StaticResource Segment}" GroupName="AppTheme" Content="Escuro" IsChecked="{Binding ThemeIsDark}" />
+            </StackPanel>
+
+            <TextBlock Style="{StaticResource SettingsSection}" Text="Widget" />
             <CheckBox Content="Mostrar widget" IsChecked="{Binding ShowOverlay}" />
-            <CheckBox Content="Tema claro no overlay" IsChecked="{Binding OverlayThemeIsLight}" />
-            <TextBlock Text="Modelo" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,8,0,6" />
+            <TextBlock Text="Modelo" Style="{StaticResource SettingsHint}" Margin="0,4,0,6" />
             <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
               <RadioButton Style="{StaticResource Segment}" GroupName="OverlayMode" Content="Completo" IsChecked="{Binding OverlayComplete}" />
               <RadioButton Style="{StaticResource Segment}" GroupName="OverlayMode" Content="Simples" IsChecked="{Binding OverlayCompact}" />
             </StackPanel>
             <CheckBox Content="Clique atravessa o overlay" IsChecked="{Binding OverlayClickThrough}" />
-            <CheckBox Content="Mostrar IP externo no programa" IsChecked="{Binding ShowPublicIp}" />
-            <CheckBox Content="Mostrar gráfico no programa" IsChecked="{Binding ShowChart}" />
-            <TextBlock Text="Opacidade do widget" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,8,0,4" />
-            <Slider Minimum="0.3" Maximum="1" Value="{Binding OverlayOpacity}" TickFrequency="0.05" IsSnapToTickEnabled="True" Margin="0,0,0,16" />
+            <TextBlock Text="Opacidade do widget" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,4,0,4" />
+            <Slider Minimum="0.3" Maximum="1" Value="{Binding OverlayOpacity}" TickFrequency="0.05" IsSnapToTickEnabled="True" Margin="0,0,0,4" />
 
-            <TextBlock Text="Alertas de pico" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,8" />
+            <TextBlock Style="{StaticResource SettingsSection}" Text="Janela" />
+            <CheckBox Content="Mostrar IP externo" IsChecked="{Binding ShowPublicIp}" />
+            <CheckBox Content="Mostrar gráfico de tráfego" IsChecked="{Binding ShowChart}" />
+
+            <TextBlock Style="{StaticResource SettingsSection}" Text="Alertas de pico" />
             <CheckBox Content="Alertar picos de consumo" IsChecked="{Binding PeakAlertEnabled}" />
-            <Grid Margin="0,0,0,16">
+            <Grid Margin="0,0,0,4">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="12" />
                 <ColumnDefinition Width="*" />
               </Grid.ColumnDefinitions>
               <StackPanel>
-                <TextBlock Text="Download (MB/s)" FontSize="11" Foreground="{StaticResource MutedBrush}" />
+                <TextBlock Text="Download (MB/s)" FontSize="11" Foreground="{DynamicResource MutedBrush}" />
                 <TextBox Text="{Binding PeakDownText, UpdateSourceTrigger=LostFocus}" />
               </StackPanel>
               <StackPanel Grid.Column="2">
-                <TextBlock Text="Upload (MB/s)" FontSize="11" Foreground="{StaticResource MutedBrush}" />
+                <TextBlock Text="Upload (MB/s)" FontSize="11" Foreground="{DynamicResource MutedBrush}" />
                 <TextBox Text="{Binding PeakUpText, UpdateSourceTrigger=LostFocus}" />
               </StackPanel>
             </Grid>
 
-            <TextBlock Text="Conexões encerradas" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,8" />
-            <TextBlock Text="Manter no histórico" FontSize="11" Foreground="{StaticResource MutedBrush}" Margin="0,0,0,6" />
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+            <TextBlock Style="{StaticResource SettingsSection}" Text="Histórico" />
+            <TextBlock Style="{StaticResource SettingsHint}" Text="Quanto tempo manter conexões encerradas." />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
               <RadioButton Style="{StaticResource Segment}" Content="5 min" IsChecked="{Binding Retention5}" />
               <RadioButton Style="{StaticResource Segment}" Content="10 min" IsChecked="{Binding Retention10}" />
               <RadioButton Style="{StaticResource Segment}" Content="30 min" IsChecked="{Binding Retention30}" />
             </StackPanel>
 
-            <TextBlock Text="Inicialização" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,8" />
+            <TextBlock Style="{StaticResource SettingsSection}" Text="Inicialização" />
             <CheckBox Content="Iniciar com o Windows" IsChecked="{Binding StartWithWindows}" />
             <CheckBox Content="Começar minimizado na bandeja" IsChecked="{Binding StartMinimized}" />
 
-            <TextBlock Text="Filtros" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="12,8,0,8" />
+            <TextBlock Style="{StaticResource SettingsSection}" Text="Filtros" />
             <CheckBox Content="Somente TCP estabelecidas" IsChecked="{Binding EstablishedOnly}" />
             <CheckBox Content="Mostrar binds UDP" IsChecked="{Binding ShowUdp}" />
             <CheckBox Content="Ocultar loopback" IsChecked="{Binding HideLoopback}" />
             <CheckBox Content="Ocultar IPs da rede local" IsChecked="{Binding HidePrivate}" />
             <CheckBox Content="Resolver nomes DNS" IsChecked="{Binding ResolveDns}" />
 
-            <TextBlock Text="Atualização" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,8,0,8" />
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+            <TextBlock Style="{StaticResource SettingsSection}" Text="Atualização da lista" />
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
               <RadioButton Style="{StaticResource Segment}" Content="0,5 s" IsChecked="{Binding RefreshFast}" />
               <RadioButton Style="{StaticResource Segment}" Content="1 s" IsChecked="{Binding RefreshNormal}" />
               <RadioButton Style="{StaticResource Segment}" Content="2 s" IsChecked="{Binding RefreshSlow}" />
             </StackPanel>
 
-            <TextBlock Text="Adaptadores" Foreground="{StaticResource MutedBrush}" FontSize="12" Margin="0,0,0,8" />
+            <TextBlock Style="{StaticResource SettingsSection}" Text="Firewall" />
+            <TextBlock Text="{Binding ElevationText}" Style="{StaticResource SettingsHint}" />
+            <Button Style="{StaticResource GhostButton}" Content="Reiniciar como administrador"
+                    Click="RestartAdmin_Click" HorizontalAlignment="Left"
+                    Visibility="{Binding IsElevated, Converter={StaticResource BoolToVisInv}}" Margin="0,0,0,12" />
+            <ItemsControl ItemsSource="{Binding BlockRules}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding Label}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                    <Button Grid.Column="1" Style="{StaticResource IconToolButton}" ToolTip="Remover bloqueio"
+                            Click="RemoveBlock_Click" Tag="{Binding}">
+                      <TextBlock Style="{StaticResource Glyph}" Text="&#xE74D;" FontSize="12" />
+                    </Button>
+                  </Grid>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Text="Nenhum bloqueio ativo." Foreground="{DynamicResource MutedBrush}">
+              <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                  <Setter Property="Visibility" Value="Collapsed" />
+                  <Style.Triggers>
+                    <DataTrigger Binding="{Binding BlockRules.Count}" Value="0">
+                      <Setter Property="Visibility" Value="Visible" />
+                    </DataTrigger>
+                  </Style.Triggers>
+                </Style>
+              </TextBlock.Style>
+            </TextBlock>
+
+            <TextBlock Style="{StaticResource SettingsSection}" Text="Adaptadores" />
             <ItemsControl ItemsSource="{Binding Adapters}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
                   <CheckBox IsChecked="{Binding Enabled}">
                     <StackPanel>
                       <TextBlock Text="{Binding Name}" />
-                      <TextBlock Text="{Binding Description}" Foreground="{StaticResource MutedBrush}" FontSize="11" TextWrapping="Wrap" />
+                      <TextBlock Text="{Binding Description}" Foreground="{DynamicResource MutedBrush}" FontSize="11" TextWrapping="Wrap" />
                     </StackPanel>
                   </CheckBox>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>
 
-            <Button Style="{StaticResource GhostButton}" Content="Fechar" Margin="0,12,0,8" Click="CloseSettings_Click" />
+            <Button Style="{StaticResource GhostButton}" Content="Fechar" Margin="0,16,0,8" Click="CloseSettings_Click" />
           </StackPanel>
           </ScrollViewer>
         </DockPanel>

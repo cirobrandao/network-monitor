@@ -23,8 +23,7 @@ public enum ViewMode
     Connections,
     Processes,
     Addresses,
-    Closed,
-    Dns
+    Closed
 }
 
 public enum ChartKind
@@ -48,12 +47,18 @@ public sealed class NetConnection
     public required int RemotePort { get; init; }
     public string? HostName { get; init; }
     public required AddressScope Scope { get; init; }
+    public string Flag { get; init; } = "";
+    public string CountryCode { get; init; } = "";
+    public ImageSource? FlagImage { get; init; }
+    public string GeoText { get; init; } = "";
+    public double DownBps { get; init; }
+    public double UpBps { get; init; }
 
     public string ProtocolText => Protocol == NetProtocol.Tcp ? "TCP" : "UDP";
     public string LocalDisplay => $"{LocalAddress}:{LocalPort}";
     public string RemoteDisplay => string.IsNullOrEmpty(RemoteAddress) ? "—" : $"{RemoteAddress}:{RemotePort}";
     public string HostDisplay => string.IsNullOrWhiteSpace(HostName) ? "—" : HostName;
-    public string GeoText { get; init; } = "";
+    public string RateText => Format.RatePair(DownBps, UpBps);
     public string Key => $"{Protocol}|{Pid}|{LocalDisplay}|{RemoteDisplay}";
 }
 
@@ -69,8 +74,12 @@ public sealed class ProcessGroup : ObservableObject
     public required int IpCount { get; init; }
     public required IReadOnlyList<NetConnection> Connections { get; init; }
     public bool IsBlocked { get; init; }
+    public double DownBps { get; init; }
+    public double UpBps { get; init; }
     public string CountLabel => $"{ConnectionCount} conexões · {IpCount} IPs";
-    public string BlockLabel => IsBlocked ? "Desbloquear" : "Bloquear";
+    public string RateText => Format.RatePair(DownBps, UpBps);
+    public string BlockLabel => IsBlocked ? "Desbloquear aplicativo" : "Bloquear aplicativo";
+    public string BlockGlyph => IsBlocked ? Glyphs.Unblock : Glyphs.Block;
 
     public bool IsExpanded
     {
@@ -91,9 +100,27 @@ public sealed class IpGroup : ObservableObject
     public required IReadOnlyList<NetConnection> Connections { get; init; }
     public bool IsBlocked { get; init; }
     public string HostDisplay => string.IsNullOrWhiteSpace(HostName) ? "—" : HostName;
+    public string Flag { get; init; } = "";
+    public string CountryCode { get; init; } = "";
+    public ImageSource? FlagImage { get; init; }
     public string GeoText { get; init; } = "";
+    public double DownBps { get; init; }
+    public double UpBps { get; init; }
     public string CountLabel => $"{ConnectionCount} conexões · {Apps}";
+    public string Subtitle
+    {
+        get
+        {
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(GeoText)) parts.Add(GeoText);
+            if (!string.IsNullOrWhiteSpace(HostName)) parts.Add(HostName);
+            parts.Add(CountLabel);
+            return string.Join(" · ", parts);
+        }
+    }
+    public string RateText => Format.RatePair(DownBps, UpBps);
     public string BlockLabel => IsBlocked ? "Desbloquear IP" : "Bloquear IP";
+    public string BlockGlyph => IsBlocked ? Glyphs.Unblock : Glyphs.Block;
 
     public bool IsExpanded
     {
@@ -119,6 +146,9 @@ public sealed class ClosedConnection
     public required string DurationLabel { get; init; }
     public required string AgoLabel { get; init; }
     public string HostDisplay => string.IsNullOrWhiteSpace(HostName) ? "—" : HostName;
+    public string Flag { get; init; } = "";
+    public string CountryCode { get; init; } = "";
+    public ImageSource? FlagImage { get; init; }
     public string GeoText { get; init; } = "";
 }
 

@@ -49,6 +49,7 @@ public sealed class AppSettings
     public List<string> DisabledAdapters { get; set; } = [];
     public bool FirstRun { get; set; } = true;
     public string OverlayTheme { get; set; } = "Dark";
+    public string Theme { get; set; } = "System";
     public List<AlertRule> AlertRules { get; set; } = [];
 }
 

@@ -22,4 +22,32 @@ public class ScoopTests
         var rule = new AlertRule { ProcessNameContains = "chrome", MaxDownMBps = 2, MaxUpMBps = 1, Enabled = true };
         Assert.True(rule.Enabled);
     }
+
+    [Fact]
+    public void FlagEmoji_FromCountryCode()
+    {
+        Assert.Equal(Regional("BR"), Format.FlagEmoji("BR"));
+        Assert.Equal(Regional("US"), Format.FlagEmoji("us"));
+        Assert.Equal(Regional("DE"), Format.FlagEmoji("DE"));
+    }
+
+    private static string Regional(string code)
+        => string.Concat(
+            char.ConvertFromUtf32(0x1F1E6 + (char.ToUpperInvariant(code[0]) - 'A')),
+            char.ConvertFromUtf32(0x1F1E6 + (char.ToUpperInvariant(code[1]) - 'A')));
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("X")]
+    [InlineData("USA")]
+    public void FlagEmoji_Invalid_Empty(string? code)
+        => Assert.Equal("", Format.FlagEmoji(code));
+
+    [Fact]
+    public void Theme_ExplicitModes()
+    {
+        Assert.True(Theme.ResolveLight("Light"));
+        Assert.False(Theme.ResolveLight("Dark"));
+    }
 }

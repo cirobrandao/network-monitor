@@ -9,3 +9,8 @@ dist/
 *.log
 .idea/
 *.DotSettings.user
+*.zip
+*.nupkg
+TestResults/
+*.tmp
+*.bak

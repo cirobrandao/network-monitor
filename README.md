@@ -9,7 +9,8 @@ App nativo para Windows 11 que mostra **quem está conectado aonde** e um **over
 - Agrupa a visão por aplicativo, por IP ou por conexão
 - Overlay compacto com download, upload, conexões ativas e IP externo (cada item pode ser ocultado)
 - Gráfico de tráfego no programa (linha, área ou barras)
-- Teste de DNS e bloqueio de aplicativo/IP pelo Firewall do Windows
+- Bandeira do país, clique para copiar o IP e velocidade por aplicativo/IP
+- Teste de DNS em janela própria; bloqueio de aplicativo/IP pelo Firewall do Windows
 - Histórico de conexões encerradas (5, 10 ou 30 minutos)
 - Alerta visual e na bandeja quando há pico de consumo
 - Ícone na bandeja do sistema (fechar a janela não encerra o app)
@@ -43,7 +44,7 @@ O app fica em `dist\NetworkMonitor.exe` junto com as DLLs. Para um único arquiv
 
 ## Atualizacao automatica (GitHub Releases)
 
-O app consulta `https://github.com/cirobrandao/network-monitor/releases/latest` na abertura e pelo botao **Atualizar**.
+O app consulta `https://github.com/cirobrandao/network-monitor/releases/latest` na abertura e a cada 6 horas. O rodapé só mostra **Nova versão** quando houver atualização.
 
 - Nao precisa de servidor proprio: usa a CDN do GitHub.
 - Nao usa `git` no PC do usuario.
@@ -70,7 +71,9 @@ Isso compila, gera o zip, cria a tag `v1.1.0` e a release com o asset.
 ## Novidades 1.1
 
 - UAC sob demanda no bloqueio
-- Geo/ASN com cache
-- Bandwidth por processo (EStats)
+- Geo/ASN com cache e bandeira do país
+- Bandwidth por processo e por IP (EStats)
 - Alertas por processo (settings.json AlertRules)
-- Tema claro/escuro do overlay
+- Tema: cor do sistema, claro ou escuro
+- Teste de DNS em ferramenta separada
+- Clique no IP para copiar
