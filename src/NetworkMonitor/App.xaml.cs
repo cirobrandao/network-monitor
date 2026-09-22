@@ -32,7 +32,9 @@ public partial class App : Application
         DispatcherUnhandledException += (_, args) =>
         {
             File.WriteAllText(Path.Combine(Path.GetTempPath(), "network-monitor-crash.txt"), args.Exception.ToString());
-            args.Handled = false;
+            // Keep the app running after an unexpected UI-thread exception
+            // (e.g. a transient clipboard COM error) instead of crashing it.
+            args.Handled = true;
         };
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
         {

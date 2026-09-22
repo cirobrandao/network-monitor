@@ -13,6 +13,18 @@ internal readonly struct RawConnection
     public readonly string RemoteAddress;
     public readonly int RemotePort;
 
+    /// <summary>
+    /// Raw MIB_TCPROW fields (network byte order, IPv4 only) used to look up
+    /// per-connection extended TCP statistics (see TcpEStats). Zero when not
+    /// applicable (UDP rows or IPv6 rows).
+    /// </summary>
+    public readonly uint RawState;
+    public readonly uint RawLocalAddr;
+    public readonly uint RawLocalPort;
+    public readonly uint RawRemoteAddr;
+    public readonly uint RawRemotePort;
+    public readonly bool IsIPv4;
+
     public RawConnection(
         NetProtocol protocol,
         string state,
@@ -20,7 +32,13 @@ internal readonly struct RawConnection
         string localAddress,
         int localPort,
         string remoteAddress,
-        int remotePort)
+        int remotePort,
+        uint rawState = 0,
+        uint rawLocalAddr = 0,
+        uint rawLocalPort = 0,
+        uint rawRemoteAddr = 0,
+        uint rawRemotePort = 0,
+        bool isIPv4 = false)
     {
         Protocol = protocol;
         State = state;
@@ -29,6 +47,12 @@ internal readonly struct RawConnection
         LocalPort = localPort;
         RemoteAddress = remoteAddress;
         RemotePort = remotePort;
+        RawState = rawState;
+        RawLocalAddr = rawLocalAddr;
+        RawLocalPort = rawLocalPort;
+        RawRemoteAddr = rawRemoteAddr;
+        RawRemotePort = rawRemotePort;
+        IsIPv4 = isIPv4;
     }
 }
 
@@ -98,7 +122,13 @@ internal static class IpHelper
                         ToIPv4(localAddr),
                         ToPort(localPort),
                         NormalizeRemote(ToIPv4(remoteAddr)),
-                        ToPort(remotePort)));
+                        ToPort(remotePort),
+                        rawState: state,
+                        rawLocalAddr: localAddr,
+                        rawLocalPort: localPort,
+                        rawRemoteAddr: remoteAddr,
+                        rawRemotePort: remotePort,
+                        isIPv4: true));
                 }
                 else
                 {
