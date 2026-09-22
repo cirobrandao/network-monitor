@@ -23,6 +23,7 @@ public partial class App : Application
     private bool _ownsMutex;
     private readonly BandwidthMonitor _bandwidth = new();
     private readonly ProcessBandwidthService _processBw = new();
+    private readonly PerIpMeter _perIp = new();
     private readonly ProcessResolver _processes = new();
     private readonly DnsResolver _dns = new();
     private readonly PublicIpService _publicIp = new();
@@ -46,6 +47,13 @@ public partial class App : Application
         {
             DumpConnections();
             Shutdown();
+            return;
+        }
+
+        if (e.Args.Any(a => string.Equals(a, "--per-ip-meter", StringComparison.OrdinalIgnoreCase)))
+        {
+            var code = PerIpMeter.RunServer(e.Args);
+            Shutdown(code);
             return;
         }
 
@@ -89,6 +97,7 @@ public partial class App : Application
         await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
         loading.Close();
 
+        _perIp.Start();
         _loopCts = new CancellationTokenSource();
         var samplingToken = _loopCts.Token;
         _ = Task.Run(() => RunLoopAsync(samplingToken));
@@ -107,24 +116,12 @@ public partial class App : Application
 
     public void RestartElevated()
     {
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = Environment.ProcessPath,
-                UseShellExecute = true,
-                Verb = "runas"
-            });
-            ExitApp();
-        }
-        catch
-        {
-            // UAC cancelado
-        }
+        _perIp.RequestElevatedMeter();
     }
 
     public void ExitApp()
     {
+        _perIp.Dispose();
         _loopCts?.Cancel();
         if (_tray is not null)
         {
@@ -230,7 +227,8 @@ public partial class App : Application
                 var settings = AppState.Current.Settings;
                 var bandwidth = _bandwidth.Capture(settings.DisabledAdapters);
                 var raw = IpHelper.GetAll(settings.ShowUdp);
-                var traffic = _processBw.Sample(raw, bandwidth.DownBps, bandwidth.UpBps, 8);
+                var traffic = _processBw.Sample(raw, bandwidth.DownBps, bandwidth.UpBps, 8, _perIp);
+                var perIpMeasured = _perIp.HasFreshSample || FirewallService.IsElevated;
                 var mapped = new List<(Native.RawConnection Row, ProcessInfo Process, AddressScope Scope, string? Host)>(raw.Count);
                 foreach (var row in raw)
                 {
@@ -266,7 +264,7 @@ public partial class App : Application
                             Scope = item.Scope
                         });
                     }
-                    AppState.Current.ApplySnapshot(bandwidth, connections, traffic);
+                    AppState.Current.ApplySnapshot(bandwidth, connections, traffic, perIpMeasured);
                 });
             }
             catch

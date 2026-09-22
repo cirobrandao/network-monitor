@@ -602,7 +602,7 @@
 
             <TextBlock Style="{StaticResource SettingsSection}" Text="Firewall" />
             <TextBlock Text="{Binding ElevationText}" Style="{StaticResource SettingsHint}" />
-            <Button Style="{StaticResource GhostButton}" Content="Reiniciar como administrador"
+            <Button Style="{StaticResource GhostButton}" Content="Medir velocidade de cada IP"
                     Click="RestartAdmin_Click" HorizontalAlignment="Left"
                     Visibility="{Binding IsElevated, Converter={StaticResource BoolToVisInv}}" Margin="0,0,0,12" />
             <ItemsControl ItemsSource="{Binding BlockRules}">

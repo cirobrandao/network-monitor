@@ -11,8 +11,8 @@
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
-    <Version>1.2.2</Version>
-    <InformationalVersion>1.2.2</InformationalVersion>
+    <Version>1.2.3</Version>
+    <InformationalVersion>1.2.3</InformationalVersion>
     <Product>Network Monitor</Product>
     <Company>Ciro Brandao</Company>
     <Authors>Ciro Brandao</Authors>

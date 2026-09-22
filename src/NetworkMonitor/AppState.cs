@@ -174,9 +174,10 @@ public sealed class AppState : ObservableObject
     }
     public bool DnsIdle => !DnsBusy;
     public bool IsElevated { get; } = FirewallService.IsElevated;
-    public string ElevationText => IsElevated
-        ? "Executando como administrador — velocidade medida por IP"
-        : "Sem administrador — a velocidade por IP fica estimada. Reinicie como administrador para medir cada IP.";
+    public bool PerIpMeasured { get; private set; }
+    public string ElevationText => IsElevated || PerIpMeasured
+        ? "Velocidade medida individualmente em cada IP"
+        : "Aceite a permissão do Windows para medir cada IP. Sem isso, os IPs do mesmo aplicativo mostram a mesma velocidade.";
     public bool OverlayComplete
     {
         get => !OverlayCompact;
@@ -721,8 +722,14 @@ public sealed class AppState : ObservableObject
         PublicIp = string.IsNullOrWhiteSpace(ip) ? "—" : ip;
     }
 
-    internal void ApplyTraffic(TrafficSnapshot traffic)
+    internal void ApplyTraffic(TrafficSnapshot traffic, bool perIpMeasured = false)
     {
+        if (PerIpMeasured != perIpMeasured)
+        {
+            PerIpMeasured = perIpMeasured;
+            Raise(nameof(PerIpMeasured));
+            Raise(nameof(ElevationText));
+        }
         _bwByConn = traffic.ByConnection;
         _bwByPid = traffic.ByPid;
         _bwByRemote = traffic.ByRemote;
@@ -765,10 +772,10 @@ public sealed class AppState : ObservableObject
         });
     }
 
-    internal void ApplySnapshot(BandwidthSnapshot bandwidth, List<NetConnection> connections, TrafficSnapshot? traffic = null)
+    internal void ApplySnapshot(BandwidthSnapshot bandwidth, List<NetConnection> connections, TrafficSnapshot? traffic = null, bool perIpMeasured = false)
     {
         if (traffic is not null)
-            ApplyTraffic(traffic);
+            ApplyTraffic(traffic, perIpMeasured);
         DownBps = bandwidth.DownBps;
         UpBps = bandwidth.UpBps;
         DownText = Format.Rate(DownBps);

@@ -54,6 +54,8 @@ internal readonly struct RawConnection
         RawRemotePort = rawRemotePort;
         IsIPv4 = isIPv4;
     }
+
+    public string Key => $"{Protocol}|{Pid}|{LocalAddress}:{LocalPort}|{RemoteAddress}:{RemotePort}";
 }
 
 internal static class IpHelper

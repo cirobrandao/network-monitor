@@ -58,7 +58,8 @@ internal sealed class ProcessBandwidthService
         IEnumerable<RawConnection> connections,
         double nicDownBps,
         double nicUpBps,
-        int top = 5)
+        int top = 5,
+        PerIpMeter? perIp = null)
     {
         var now = Stopwatch.GetTimestamp();
         var established = connections
@@ -154,17 +155,28 @@ internal sealed class ProcessBandwidthService
             measuredByPid[c.Pid] = measuredByPid.TryGetValue(c.Pid, out var sum) ? sum.Add(rate) : rate;
         }
 
-        var unmeasuredConnCount = established
-            .Where(c => !measured.ContainsKey($"{c.Protocol}|{c.Pid}|{c.LocalAddress}:{c.LocalPort}|{c.RemoteAddress}:{c.RemotePort}"))
-            .GroupBy(c => c.Pid)
-            .ToDictionary(g => g.Key, g => g.Count());
-        var byConn = new Dictionary<string, Rates>(StringComparer.Ordinal);
-        var byRemote = new Dictionary<string, Rates>(StringComparer.OrdinalIgnoreCase);
+        var unmeasuredWeight = new Dictionary<int, (double Down, double Up)>();
         foreach (var c in established)
         {
-            var connKey = $"{c.Protocol}|{c.Pid}|{c.LocalAddress}:{c.LocalPort}|{c.RemoteAddress}:{c.RemotePort}";
+            if (measured.ContainsKey(c.Key))
+                continue;
+            var (downW, upW) = ActivityWeight(c);
+            unmeasuredWeight.TryGetValue(c.Pid, out var sum);
+            unmeasuredWeight[c.Pid] = (sum.Down + downW, sum.Up + upW);
+        }
+
+        var byConn = new Dictionary<string, Rates>(StringComparer.Ordinal);
+        var byRemote = new Dictionary<string, Rates>(StringComparer.OrdinalIgnoreCase);
+        var meterLive = perIp is not null && perIp.HasFreshSample;
+        foreach (var c in established)
+        {
+            var connKey = c.Key;
             Rates share;
-            if (measured.TryGetValue(connKey, out var measuredRate))
+            if (meterLive)
+            {
+                perIp!.TryGet(connKey, out share);
+            }
+            else if (measured.TryGetValue(connKey, out var measuredRate))
             {
                 share = measuredRate;
             }
@@ -176,7 +188,11 @@ internal sealed class ProcessBandwidthService
                 var remaining = new Rates(
                     Math.Max(0, processRate.DownBps - alreadyMeasured.DownBps),
                     Math.Max(0, processRate.UpBps - alreadyMeasured.UpBps));
-                share = remaining.Share(unmeasuredConnCount.GetValueOrDefault(c.Pid, 1));
+                var (downW, upW) = ActivityWeight(c);
+                unmeasuredWeight.TryGetValue(c.Pid, out var totalW);
+                share = new Rates(
+                    totalW.Down > 0 ? remaining.DownBps * (downW / totalW.Down) : 0,
+                    totalW.Up > 0 ? remaining.UpBps * (upW / totalW.Up) : 0);
             }
 
             byConn[connKey] = share;
@@ -219,6 +235,13 @@ internal sealed class ProcessBandwidthService
                 .Where(r => r.DownBps + r.UpBps > 256)
                 .ToList()
         };
+    }
+
+    private static (double Down, double Up) ActivityWeight(RawConnection connection)
+    {
+        if (TcpEStats.TryReadCounters(connection, out var bytesIn, out var bytesOut))
+            return (Math.Max(1, bytesIn), Math.Max(1, bytesOut));
+        return (1, 1);
     }
 
     private static bool TryReadIo(int pid, out ulong read, out ulong write)

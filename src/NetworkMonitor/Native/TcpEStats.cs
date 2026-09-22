@@ -88,6 +88,27 @@ internal static class TcpEStats
 
     private static readonly HashSet<string> EnabledConnections = new(StringComparer.Ordinal);
 
+    public static bool TryReadCounters(RawConnection connection, out ulong bytesIn, out ulong bytesOut)
+    {
+        bytesIn = 0;
+        bytesOut = 0;
+        if (!connection.IsIPv4)
+            return false;
+        var row = Row(connection);
+        var rod = new TCP_ESTATS_DATA_ROD_v0();
+        var getResult = GetPerTcpConnectionEStats(
+            ref row,
+            TcpConnectionEstatsData,
+            IntPtr.Zero, 0, 0,
+            IntPtr.Zero, 0, 0,
+            ref rod, 0, (uint)Marshal.SizeOf<TCP_ESTATS_DATA_ROD_v0>());
+        if (getResult != NoError)
+            return false;
+        bytesIn = rod.DataBytesIn;
+        bytesOut = rod.DataBytesOut;
+        return bytesIn + bytesOut > 0;
+    }
+
     public static bool TryGetDataBytes(RawConnection connection, out ulong bytesIn, out ulong bytesOut)
     {
         bytesIn = 0;
@@ -95,14 +116,7 @@ internal static class TcpEStats
         if (Unavailable || !connection.IsIPv4)
             return false;
 
-        var row = new MIB_TCPROW
-        {
-            dwState = connection.RawState,
-            dwLocalAddr = connection.RawLocalAddr,
-            dwLocalPort = connection.RawLocalPort,
-            dwRemoteAddr = connection.RawRemoteAddr,
-            dwRemotePort = connection.RawRemotePort
-        };
+        var row = Row(connection);
 
         var key = $"{connection.RawLocalAddr}:{connection.RawLocalPort}-{connection.RawRemoteAddr}:{connection.RawRemotePort}";
         if (EnabledConnections.Add(key))
@@ -118,21 +132,17 @@ internal static class TcpEStats
             }
         }
 
-        var rod = new TCP_ESTATS_DATA_ROD_v0();
-        var getResult = GetPerTcpConnectionEStats(
-            ref row,
-            TcpConnectionEstatsData,
-            IntPtr.Zero, 0, 0,
-            IntPtr.Zero, 0, 0,
-            ref rod, 0, (uint)Marshal.SizeOf<TCP_ESTATS_DATA_ROD_v0>());
-
-        if (getResult != NoError)
-            return false;
-
-        bytesIn = rod.DataBytesIn;
-        bytesOut = rod.DataBytesOut;
-        return true;
+        return TryReadCounters(connection, out bytesIn, out bytesOut);
     }
+
+    private static MIB_TCPROW Row(RawConnection connection) => new()
+    {
+        dwState = connection.RawState,
+        dwLocalAddr = connection.RawLocalAddr,
+        dwLocalPort = connection.RawLocalPort,
+        dwRemoteAddr = connection.RawRemoteAddr,
+        dwRemotePort = connection.RawRemotePort
+    };
 
     public static void ForgetStaleConnections(IReadOnlyCollection<string> activeKeys)
     {
