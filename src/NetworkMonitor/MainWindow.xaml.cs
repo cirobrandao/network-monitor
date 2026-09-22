@@ -68,9 +68,37 @@ public partial class MainWindow : Window
         var ip = (sender as FrameworkElement)?.Tag as string;
         if (string.IsNullOrWhiteSpace(ip) || ip is "—" or "0.0.0.0" or "::")
             return;
-        Clipboard.SetText(ip);
-        AppState.Current.FlashStatus("Copiado: " + ip);
+        if (TryCopyToClipboard(ip))
+            AppState.Current.FlashStatus("Copiado: " + ip);
         e.Handled = true;
+    }
+
+    /// <summary>
+    /// Copies text to the clipboard, swallowing the transient
+    /// COM exceptions that Clipboard.SetText can throw when another
+    /// process (a clipboard manager, remote desktop, antivirus, etc.)
+    /// briefly holds the clipboard open. Previously an unhandled
+    /// exception here would crash the whole application.
+    /// </summary>
+    private static bool TryCopyToClipboard(string text)
+    {
+        for (var attempt = 0; attempt < 3; attempt++)
+        {
+            try
+            {
+                Clipboard.SetText(text);
+                return true;
+            }
+            catch (System.Runtime.InteropServices.COMException)
+            {
+                System.Threading.Thread.Sleep(30);
+            }
+            catch (System.Runtime.InteropServices.ExternalException)
+            {
+                System.Threading.Thread.Sleep(30);
+            }
+        }
+        return false;
     }
 
     private void OpenDns_Click(object sender, RoutedEventArgs e)
@@ -114,26 +142,26 @@ public partial class MainWindow : Window
     private void Connections_MouseDoubleClick(object sender, MouseButtonEventArgs e)
     {
         if (sender is System.Windows.Controls.ListView { SelectedItem: NetConnection connection })
-            Clipboard.SetText(connection.RemoteAddress.Length > 0 ? connection.RemoteDisplay : connection.LocalDisplay);
+            TryCopyToClipboard(connection.RemoteAddress.Length > 0 ? connection.RemoteDisplay : connection.LocalDisplay);
     }
 
     private void CopyRemote_Click(object sender, RoutedEventArgs e)
     {
         if (ConnectionsList.SelectedItem is NetConnection connection)
-            Clipboard.SetText(connection.RemoteDisplay);
+            TryCopyToClipboard(connection.RemoteDisplay);
     }
 
     private void CopyProcess_Click(object sender, RoutedEventArgs e)
     {
         if (ConnectionsList.SelectedItem is NetConnection connection)
-            Clipboard.SetText(connection.ProcessName);
+            TryCopyToClipboard(connection.ProcessName);
     }
 
     private void CopyRow_Click(object sender, RoutedEventArgs e)
     {
         if (ConnectionsList.SelectedItem is NetConnection connection)
         {
-            Clipboard.SetText(
+            TryCopyToClipboard(
                 $"{connection.ProcessName}\t{connection.Pid}\t{connection.ProtocolText}\t{connection.LocalDisplay}\t{connection.RemoteDisplay}\t{connection.HostDisplay}\t{Format.State(connection.State)}");
         }
     }

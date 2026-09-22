@@ -1,5 +1,14 @@
 ; Instalador por usuario (sem administrador).
 ; Compilado por scripts\pack-installer.ps1
+;
+; Nota sobre o aviso do SmartScreen ("Windows protegeu o computador"):
+; esse aviso aparece porque o instalador ainda nao possui uma assinatura
+; de codigo (code signing certificate) reconhecida pela Microsoft. Isso
+; nao pode ser resolvido apenas com configuracao do instalador; e
+; necessario adquirir um certificado de assinatura de codigo (ex.:
+; EV Code Signing) e assinar o .exe gerado (signtool.exe) antes de
+; publicar cada release. Ate la, o aviso continuara aparecendo para
+; novas instalacoes, mesmo com AppPublisher/AppPublisherURL preenchidos.
 
 #ifndef AppVersion
   #define AppVersion "1.2.0"
@@ -31,7 +40,10 @@ AppUpdatesURL=https://github.com/cirobrandao/network-monitor/releases
 DefaultDirName={localappdata}\NetworkMonitor
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
-DisableDirPage=yes
+DisableDirPage=no
+DisableWelcomePage=no
+DisableReadyPage=no
+DisableFinishedPage=no
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
@@ -55,6 +67,11 @@ AppMutex=Local\NetworkMonitor.SingleInstance
 [Languages]
 Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 
+[Messages]
+brazilianportuguese.WelcomeLabel2=Este assistente vai instalar o [name] no seu computador.%n%nO Network Monitor mostra em tempo real as conexoes, os aplicativos e os enderecos IP que estao usando a sua internet, alem da velocidade de upload e download.%n%nRecomendamos fechar os outros aplicativos abertos antes de continuar.
+brazilianportuguese.ReadyLabel1=O assistente esta pronto para comecar a instalacao do [name] no seu computador.
+brazilianportuguese.ReadyLabel2a=Clique em Instalar para continuar com a instalacao, ou em Voltar caso queira revisar ou alterar alguma configuracao. Veja abaixo os detalhes do que sera instalado:
+
 [Tasks]
 Name: "desktopicon"; Description: "Criar atalho na area de trabalho"; GroupDescription: "Atalhos:"; Flags: checkedonce
 Name: "startup"; Description: "Iniciar com o Windows"; GroupDescription: "Atalhos:"; Flags: unchecked
@@ -65,12 +82,14 @@ Source: "{#DistDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs cr
 [Icons]
 Name: "{userprograms}\{#AppName}"; Filename: "{app}\{#AppExe}"; Comment: "Monitor de internet para Windows"
 Name: "{userdesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Comment: "Monitor de internet para Windows"; Tasks: desktopicon
+Name: "{userprograms}\Site do desenvolvedor"; Filename: "{#AppURL}"; Comment: "Visitar o site do desenvolvedor"
 
 [Registry]
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "NetworkMonitor"; ValueData: """{app}\{#AppExe}"""; Flags: uninsdeletevalue; Tasks: startup
 
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "Abrir o Network Monitor agora"; Flags: nowait postinstall skipifsilent
+Filename: "{#AppURL}"; Description: "Visitar o site do desenvolvedor"; Flags: postinstall shellexec skipifsilent unchecked
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"

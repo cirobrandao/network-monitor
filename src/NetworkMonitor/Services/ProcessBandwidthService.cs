@@ -52,6 +52,7 @@ internal sealed class ProcessBandwidthService
 {
     private const int ProcessQueryLimitedInformation = 0x1000;
     private readonly Dictionary<int, (ulong Read, ulong Write, long Ticks)> _io = [];
+    private readonly Dictionary<string, (ulong BytesIn, ulong BytesOut, long Ticks)> _estats = [];
 
     public TrafficSnapshot Sample(
         IEnumerable<RawConnection> connections,
@@ -113,17 +114,71 @@ internal sealed class ProcessBandwidthService
                 byPid[pid] = new Rates(nicDown * n / total, nicUp * n / total);
         }
 
-        var pidConnCount = established
+        // Try to read real per-connection byte counters first (accurate, but
+        // only works for IPv4 TCP sockets and only when running elevated).
+        // Connections without real data fall back to an even split of the
+        // remaining process-level rate, so every IP no longer shows an
+        // identical, misleading speed when real measurements are available.
+        var measured = new Dictionary<string, Rates>(StringComparer.Ordinal);
+        var activeEstatsKeys = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var c in established)
+        {
+            if (!c.IsIPv4)
+                continue;
+            var estatsKey = $"{c.RawLocalAddr}:{c.RawLocalPort}-{c.RawRemoteAddr}:{c.RawRemotePort}";
+            activeEstatsKeys.Add(estatsKey);
+            if (!TcpEStats.TryGetDataBytes(c, out var bytesIn, out var bytesOut))
+                continue;
+
+            if (_estats.TryGetValue(estatsKey, out var prev))
+            {
+                var dt = (now - prev.Ticks) / (double)Stopwatch.Frequency;
+                if (dt > 0.05 && bytesIn >= prev.BytesIn && bytesOut >= prev.BytesOut)
+                {
+                    var connKey = $"{c.Protocol}|{c.Pid}|{c.LocalAddress}:{c.LocalPort}|{c.RemoteAddress}:{c.RemotePort}";
+                    measured[connKey] = new Rates((bytesIn - prev.BytesIn) / dt, (bytesOut - prev.BytesOut) / dt);
+                }
+            }
+            _estats[estatsKey] = (bytesIn, bytesOut, now);
+        }
+        TcpEStats.ForgetStaleConnections(activeEstatsKeys);
+        foreach (var stale in _estats.Keys.Except(activeEstatsKeys).ToList())
+            _estats.Remove(stale);
+
+        var measuredByPid = new Dictionary<int, Rates>();
+        foreach (var c in established)
+        {
+            var connKey = $"{c.Protocol}|{c.Pid}|{c.LocalAddress}:{c.LocalPort}|{c.RemoteAddress}:{c.RemotePort}";
+            if (!measured.TryGetValue(connKey, out var rate))
+                continue;
+            measuredByPid[c.Pid] = measuredByPid.TryGetValue(c.Pid, out var sum) ? sum.Add(rate) : rate;
+        }
+
+        var unmeasuredConnCount = established
+            .Where(c => !measured.ContainsKey($"{c.Protocol}|{c.Pid}|{c.LocalAddress}:{c.LocalPort}|{c.RemoteAddress}:{c.RemotePort}"))
             .GroupBy(c => c.Pid)
             .ToDictionary(g => g.Key, g => g.Count());
         var byConn = new Dictionary<string, Rates>(StringComparer.Ordinal);
         var byRemote = new Dictionary<string, Rates>(StringComparer.OrdinalIgnoreCase);
         foreach (var c in established)
         {
-            if (!byPid.TryGetValue(c.Pid, out var processRate))
-                continue;
-            var share = processRate.Share(pidConnCount[c.Pid]);
             var connKey = $"{c.Protocol}|{c.Pid}|{c.LocalAddress}:{c.LocalPort}|{c.RemoteAddress}:{c.RemotePort}";
+            Rates share;
+            if (measured.TryGetValue(connKey, out var measuredRate))
+            {
+                share = measuredRate;
+            }
+            else
+            {
+                if (!byPid.TryGetValue(c.Pid, out var processRate))
+                    continue;
+                measuredByPid.TryGetValue(c.Pid, out var alreadyMeasured);
+                var remaining = new Rates(
+                    Math.Max(0, processRate.DownBps - alreadyMeasured.DownBps),
+                    Math.Max(0, processRate.UpBps - alreadyMeasured.UpBps));
+                share = remaining.Share(unmeasuredConnCount.GetValueOrDefault(c.Pid, 1));
+            }
+
             byConn[connKey] = share;
             byRemote[c.RemoteAddress] = byRemote.TryGetValue(c.RemoteAddress, out var ipRate)
                 ? ipRate.Add(share)

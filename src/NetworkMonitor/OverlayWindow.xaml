@@ -62,7 +62,12 @@
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBlock Text="Network Monitor" FontSize="13" FontWeight="SemiBold" Foreground="{Binding OverlayForegroundBrush}" />
+        <StackPanel Orientation="Horizontal">
+          <Image Source="Assets/app.png" Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"
+                 RenderOptions.BitmapScalingMode="HighQuality" />
+          <TextBlock Text="Network Monitor" FontSize="13" FontWeight="SemiBold" VerticalAlignment="Center"
+                     Foreground="{Binding OverlayForegroundBrush}" />
+        </StackPanel>
         <TextBlock Grid.Row="1" x:Name="AdapterLabel" Text="{Binding AdapterName}" Foreground="{Binding OverlayMutedBrush}"
                    FontSize="11" TextTrimming="CharacterEllipsis" Margin="0,2,0,8" />
         <Grid Grid.Row="2" Margin="0,0,0,3">
