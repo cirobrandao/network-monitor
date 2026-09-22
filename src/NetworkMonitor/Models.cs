@@ -53,10 +53,14 @@ public sealed class NetConnection
     public string GeoText { get; init; } = "";
     public double DownBps { get; init; }
     public double UpBps { get; init; }
+    public int SocketCount { get; init; } = 1;
 
     public string ProtocolText => Protocol == NetProtocol.Tcp ? "TCP" : "UDP";
     public string LocalDisplay => $"{LocalAddress}:{LocalPort}";
+    public string LocalSummary => SocketCount > 1 ? $"{SocketCount} portas locais" : LocalDisplay;
     public string RemoteDisplay => string.IsNullOrEmpty(RemoteAddress) ? "—" : $"{RemoteAddress}:{RemotePort}";
+    public string EndpointLabel => SocketCount > 1 ? $"{RemoteDisplay}  ×{SocketCount}" : RemoteDisplay;
+    public string ProcessLabel => SocketCount > 1 ? $"{ProcessName}  ×{SocketCount}" : ProcessName;
     public string HostDisplay => string.IsNullOrWhiteSpace(HostName) ? "—" : HostName;
     public string RateText => Format.RatePair(DownBps, UpBps);
     public string Key => $"{Protocol}|{Pid}|{LocalDisplay}|{RemoteDisplay}";

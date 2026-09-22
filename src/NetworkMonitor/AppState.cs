@@ -1095,12 +1095,13 @@ public sealed class AppState : ObservableObject
                 (c.HostName?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false));
         }
 
-        var list = query
+        var sockets = query
             .Select(Enrich)
             .OrderBy(c => c.ProcessName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(c => c.RemoteAddress, StringComparer.OrdinalIgnoreCase)
             .ThenBy(c => c.RemotePort)
             .ToList();
+        var list = CollapseSockets(sockets);
 
         Connections = list;
         Processes = list
@@ -1128,7 +1129,7 @@ public sealed class AppState : ObservableObject
                     PidSummary = "PID " + string.Join(", ", g.Select(x => x.Pid).Distinct().OrderBy(x => x)),
                     ConnectionCount = g.Count(),
                     IpCount = g.Select(x => x.RemoteAddress).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).Count(),
-                    Connections = g.ToList(),
+                    Connections = CollapseSockets(g),
                     IsExpanded = _expandedProcesses.Contains(g.Key),
                     IsBlocked = path is not null && Settings.BlockedPrograms.Contains(path, StringComparer.OrdinalIgnoreCase),
                     DownBps = down,
@@ -1157,7 +1158,7 @@ public sealed class AppState : ObservableObject
                     Scope = g.First().Scope,
                     ConnectionCount = g.Count(),
                     Apps = string.Join(", ", g.Select(x => x.ProcessName).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(x => x, StringComparer.OrdinalIgnoreCase)),
-                    Connections = g.ToList(),
+                    Connections = CollapseSockets(g),
                     IsExpanded = _expandedAddresses.Contains(g.Key),
                     IsBlocked = Settings.BlockedAddresses.Contains(g.Key, StringComparer.OrdinalIgnoreCase),
                     DownBps = ipRates.DownBps,
@@ -1221,6 +1222,43 @@ public sealed class AppState : ObservableObject
             _flashStatus = null;
             StatusText = $"{ConnectionCount} ativas · {ClosedConnections.Count} encerradas · {ProcessCount} apps · {AddressCount} IPs";
         }
+    }
+
+    private static List<NetConnection> CollapseSockets(IEnumerable<NetConnection> connections)
+    {
+        return connections
+            .GroupBy(c => $"{c.Protocol}|{c.ProcessName}|{c.Pid}|{c.RemoteAddress}|{c.RemotePort}", StringComparer.OrdinalIgnoreCase)
+            .Select(g =>
+            {
+                var first = g.OrderByDescending(x => x.DownBps + x.UpBps).First();
+                var count = g.Count();
+                if (count == 1)
+                    return first;
+                return new NetConnection
+                {
+                    Protocol = first.Protocol,
+                    State = g.Any(x => x.State == "ESTABLISHED") ? "ESTABLISHED" : first.State,
+                    Pid = first.Pid,
+                    ProcessName = first.ProcessName,
+                    ProcessPath = first.ProcessPath,
+                    Icon = first.Icon,
+                    LocalAddress = first.LocalAddress,
+                    LocalPort = first.LocalPort,
+                    RemoteAddress = first.RemoteAddress,
+                    RemotePort = first.RemotePort,
+                    HostName = first.HostName,
+                    Scope = first.Scope,
+                    Flag = first.Flag,
+                    CountryCode = first.CountryCode,
+                    FlagImage = first.FlagImage,
+                    GeoText = first.GeoText,
+                    DownBps = g.Sum(x => x.DownBps),
+                    UpBps = g.Sum(x => x.UpBps),
+                    SocketCount = count
+                };
+            })
+            .OrderByDescending(c => c.DownBps + c.UpBps)
+            .ToList();
     }
 
     private NetConnection Enrich(NetConnection c)
