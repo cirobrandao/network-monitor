@@ -55,7 +55,10 @@ UninstallDisplayIcon={app}\{#AppExe}
 UninstallDisplayName={#AppName}
 VersionInfoVersion={#AppVersion}
 VersionInfoCompany={#AppPublisher}
+VersionInfoDescription=Monitor de internet para Windows
 VersionInfoProductName={#AppName}
+VersionInfoCopyright=Copyright (C) 2026 {#AppPublisher}
+AppCopyright=Copyright (C) 2026 {#AppPublisher}
 OutputDir={#OutputDir}
 OutputBaseFilename=NetworkMonitor-Setup-{#AppVersion}
 MinVersion=10.0
@@ -68,7 +71,8 @@ AppMutex=Local\NetworkMonitor.SingleInstance
 Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 
 [Messages]
-brazilianportuguese.WelcomeLabel2=Este assistente vai instalar o [name] no seu computador.%n%nO Network Monitor mostra em tempo real as conexoes, os aplicativos e os enderecos IP que estao usando a sua internet, alem da velocidade de upload e download.%n%nRecomendamos fechar os outros aplicativos abertos antes de continuar.
+brazilianportuguese.WelcomeLabel1=Bem-vindo ao assistente de instalacao do [name]
+brazilianportuguese.WelcomeLabel2=Este assistente vai instalar o [name/ver] neste computador.%n%nO que sera instalado:%n- Network Monitor (monitor de conexoes, aplicativos e enderecos IP)%n- Widget de velocidade de download e upload%n- Atalho no menu Iniciar%n%nRecomendacao: feche os outros programas antes de continuar. A instalacao e por usuario e nao precisa de administrador.%n%nSite do desenvolvedor: {#AppURL}
 brazilianportuguese.ReadyLabel1=O assistente esta pronto para comecar a instalacao do [name] no seu computador.
 brazilianportuguese.ReadyLabel2a=Clique em Instalar para continuar com a instalacao, ou em Voltar caso queira revisar ou alterar alguma configuracao. Veja abaixo os detalhes do que sera instalado:
 

@@ -174,7 +174,9 @@ public sealed class AppState : ObservableObject
     }
     public bool DnsIdle => !DnsBusy;
     public bool IsElevated { get; } = FirewallService.IsElevated;
-    public string ElevationText => IsElevated ? "Executando como administrador" : "Sem administrador — o bloqueio pedirá elevação (UAC) quando necessário";
+    public string ElevationText => IsElevated
+        ? "Executando como administrador — velocidade medida por IP"
+        : "Sem administrador — a velocidade por IP fica estimada. Reinicie como administrador para medir cada IP.";
     public bool OverlayComplete
     {
         get => !OverlayCompact;

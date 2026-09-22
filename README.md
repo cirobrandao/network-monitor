@@ -68,7 +68,9 @@ Gera um `NetworkMonitor-Setup-1.2.1.exe` (instalacao por usuario, **sem administ
 .\scripts\pack-installer.ps1
 ```
 
-O EXE fica em `artifacts\NetworkMonitor-Setup-1.2.1.exe`. E so enviar esse arquivo.
+O EXE fica em `artifacts\NetworkMonitor-Setup-1.2.2.exe`. E so enviar esse arquivo.
+
+O assistente pergunta a pasta, mostra o que sera instalado e o site do desenvolvedor. O Windows ainda pode marcar o arquivo como nao reconhecido ate existir um certificado de assinatura de codigo (SmartScreen). O fornecedor gravado no instalador e Ciro Brandao.
 
 ## Instalacao por usuario (sem admin)
 
@@ -77,6 +79,13 @@ O EXE fica em `artifacts\NetworkMonitor-Setup-1.2.1.exe`. E so enviar esse arqui
 .\scripts\install-user.ps1
 .\scripts\uninstall-user.ps1
 ```
+
+## Novidades 1.2.2
+
+- Instalador com tela de boas-vindas, pasta escolhida pelo usuario, detalhes e link do desenvolvedor
+- Icone do app ao lado do nome no widget
+- Copiar IP nao fecha mais o programa
+- Velocidade real por IP quando o app roda como administrador
 
 ## Novidades 1.2.1
 

@@ -18,6 +18,7 @@ internal static class TcpEStats
 {
     private const int TcpConnectionEstatsData = 1;
     private const uint NoError = 0;
+    private const uint ErrorAccessDenied = 5;
 
     [StructLayout(LayoutKind.Sequential)]
     private struct MIB_TCPROW
@@ -111,7 +112,7 @@ internal static class TcpEStats
             if (setResult != NoError)
             {
                 EnabledConnections.Remove(key);
-                if (EnabledConnections.Count == 0)
+                if (setResult == ErrorAccessDenied)
                     Unavailable = true;
                 return false;
             }

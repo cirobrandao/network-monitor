@@ -11,9 +11,12 @@
     <ApplicationIcon>Assets\app.ico</ApplicationIcon>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
-    <Version>1.2.1</Version>
-    <InformationalVersion>1.2.1</InformationalVersion>
+    <Version>1.2.2</Version>
+    <InformationalVersion>1.2.2</InformationalVersion>
     <Product>Network Monitor</Product>
+    <Company>Ciro Brandao</Company>
+    <Authors>Ciro Brandao</Authors>
+    <Copyright>Copyright (C) 2026 Ciro Brandao</Copyright>
     <AssemblyTitle>Network Monitor</AssemblyTitle>
     <Description>Monitor de internet para Windows — conexões, aplicativos e overlay de velocidade.</Description>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
